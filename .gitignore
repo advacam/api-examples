@@ -2,6 +2,22 @@
 *[Pp][Oo][Kk][Uu][Ss]*
 *[Ii][Nn][Tt][Ee][Rr][Nn][Aa][Ll]*
 
+# data and aux files
+test-files/
+configs/
+logs/
+*.xml
+*.png
+*.bmf
+*.pmf
+*.h5
+*.dsc
+*.info
+*.t3pa
+*.t3p
+*.t3r
+*.bstg
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
