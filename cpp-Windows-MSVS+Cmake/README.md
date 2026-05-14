@@ -1,11 +1,11 @@
 # Examples of using binary/C API
 Tested on Windows<br>
 This dir is root of the **Visual Studio 2026** solution.<br>
-* Contains all need files except Your lic.info and (factory) config of Your device
 * Can by used dirrectly by "Play" button
 * Can be compiled with Cmake [Binary core API: Building using cmake](https://wiki.advacam.cz/wiki/Binary_core_API#Building_using_cmake_on_Windows_with_Visual_Studio_installed)
 
 ## First example: "example":
+* Contains all need files except Your lic.info and (factory) config of Your device
 * Maintaining API package location
 * CMAKE example as comment in CPP file.
 * Error handling
