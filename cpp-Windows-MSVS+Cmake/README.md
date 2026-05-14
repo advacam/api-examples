@@ -12,7 +12,7 @@ This dir is root of the **Visual Studio 2026** solution.<br>
 * Commandline program:
   * Init the Pixet core (optional chdir to API and back)
   * Load factory config
-  * Set operation mode
+  * Set operation mode (Timepix3 only)
   * Simple measurment to files
   * Exit Pixet core (optional chdir to API)
 
