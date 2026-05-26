@@ -2,6 +2,10 @@
 #include <filesystem>  
 using namespace std;
 
+// (c) 2026 Pavel Hudecek, Advacam, https://advacam.cz, https://wiki.advacam.cz/wiki/Binary_core_API
+// This example simply measure some frames and save it to files.
+
+
 /* Example CMakeList.txt, if You want to use CMake: -------------------------------------
 cmake_minimum_required(VERSION 3.10)
 project(example)
@@ -11,26 +15,31 @@ project(example)
 add_library(pxcore SHARED IMPORTED)
 set_property(TARGET pxcore PROPERTY IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/pxcore.dll")
 set_property(TARGET pxcore PROPERTY IMPORTED_IMPLIB  "${CMAKE_SOURCE_DIR}/pxcore.lib")
-add_executable(example example.cpp)
+add_executable(example example-basic.cpp)
 target_link_libraries(example pxcore)
 ---------------------------------------------------------------------------------------*/
 
-//#define PATH_TO_API ../../../../../API-nightly
-
+#define PATH_TO_API ../x64/Debug
 // Not defined: Copy whole API package to the project directory and add pxcore.lib to the linker/input in project
 //   settings or in CMakeLists.txt. Than create the 'factory' subdir and copy the factory config files there,
 //   or set the FactoryDir= in the [settings] section of the pixet.ini file.
-// - You can select minimal files needed, allways pxcapi.h, common.h, pxcore.dll, pxcore.lib, pixet.ini, and hwlib with files needed,
-//   like as minipix.dll+ftd2xx64.dll for Minipix / zest.dll+zest.ini+zestwpx.bit for Widepix with Eth.
+// - You can select minimal files needed, allways pxcapi.h, common.h, pxcore.dll, pxcore.lib, pixet.ini, lic.info
+//   and hwlib with files needed, like as minipix.dll+ftd2xx64.dll for Minipix / zest.dll+zest.ini+zestwpx.bit for Widepix with Eth.
 // Defined: Set PATH_TO_API to the path to the API package, and add pxcore.lib with path of API package
 //   to the linker/input in project settings or in CMakeLists.txt.  Factory config same as "Not defined".
-// - The example will change the working directory to PATH_TO_API before starting the Pixet core,
-//   than change it back, running the example,
-//   than change to PATH_TO_API again before exiting the core.
+// - The example will:  change the working directory to PATH_TO_API before starting the Pixet core,
+//                      than change it back, running the example,
+//                      than change to PATH_TO_API again before exiting the core.
+// Notes:
+// - The pxcapi.h including common.h if it not in project directory, include it separatelly before the pxcapi.
+// - The pxcore.dll must be in directory wit the executable, eq. "../x64/Debug" in both cases.
+//  Therefore, the easiest way is to copy the API package there so that it can be shared by all projects in the solution.
+
 #ifdef PATH_TO_API
 #define STR2(x) #x
 #define STR(x) STR2(x)
 #define API_HEADER(file) STR(PATH_TO_API/file)
+#include API_HEADER(common.h)
 #include API_HEADER(pxcapi.h)
 #else
 #include "pxcapi.h"
@@ -103,6 +112,9 @@ int main() { // ================================================================
 
     rc = pxcSetTimepix3Mode(0, PXC_TPX3_OPM_TOATOT); // sets OPM of device with index 0 to ToA+ToT
 	errHandler(rc, "pxcSetTimepix3Mode");
+    if (rc < 0) {
+        cout << "If the device is not Timepix3, use pxcSetTimepixMode/pxcSetTimepix2Mode/pxcSetMedipix3OperationMode.\n";
+	}
 
 	cout << "Warning: Measuring immediately after init may cause the first data contains power-on artefacts.\n";
 	cout << "pxcMeasureMultipleFrames...\n";
@@ -118,6 +130,10 @@ int main() { // ================================================================
     errHandler(rc, "pxcSaveMeasuredFrame 1");
     rc = pxcSaveMeasuredFrame(0, 2, "test-files/testImg2.pbf");
     errHandler(rc, "pxcSaveMeasuredFrame 2");
+
+    cout << "pxcMeasureTpx3DataDrivenMode...\n";
+	rc = pxcMeasureTpx3DataDrivenMode(0, 5, "test-files/testDataDriven.t3pa", PXC_TRG_NO);
+	errHandler(rc, "pxcMeasureTpx3DataDrivenMode");
 
 #ifdef PATH_TO_API
     if (auto chrc = changeDirToAPI() != 0) return chrc;

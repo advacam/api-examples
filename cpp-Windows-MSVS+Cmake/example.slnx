@@ -3,5 +3,8 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Project Path="example-calib/example-calib.vcxproj" />
+  <Project Path="example-callbacks/example-callbacks.vcxproj" Id="ab63a2ae-81cf-4861-9942-e5995307d9fe" />
+  <Project Path="example-callbacks2/example-callbacks2.vcxproj" Id="8690b8f6-8c5f-406b-9ff7-b382d28935e2" />
   <Project Path="example/example.vcxproj" Id="6c8168c3-9e3c-4f2b-9d51-d4cd376a0f08" />
 </Solution>
