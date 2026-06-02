@@ -8,6 +8,9 @@
 # - The acqTime is irelevant on data-driven devices like Tpx3,
 # but on frame-only devs like as Tpx/Tpx2 it must be small to prevent clusters overlap, if too small, measurement time efficiency rapidly falls.
 
+# Warning: Measuring immediately after core start can cause power-on artifacts in data.
+# It is recommended to do some dummy measurement or wait some seconds before measuring.
+
 import sys, os, traceback, time
 
 outPath = "test-files" # Output path for saving.
@@ -143,6 +146,7 @@ si.progressCallback = progressCb
 
 #loadCalibrationFromFiles("cals/I08-W0060-cal_a.txt|cals/I08-W0060-cal_b.txt|cals/I08-W0060-cal_c.txt|cals/I08-W0060-cal_t.txt")
 #loadCalibrationFromFiles("cals/Minipix-I08-W0060.xml")
+# (loadCalibrationFromFiles from files can be good for offline processing without device.)
 si.loadCalibrationFromDevice()
 print("isCalibrationLoaded", si.isCalibrationLoaded())
 
@@ -152,8 +156,8 @@ si.setMeasParams(mpFrom, mpTo, mpStep, mpMaskNP, mpDoSPC)
 print("setMeasParams done")
 
 if meas1replay0==1:
-    acqTime = 1 # single frame time (frame-only devices), no Tpx3
-    if measTime>500: acqTime = 10
+    acqTime = measTime # single frame time (frame-only devices), no Tpx3
+
     outFile = clogPath
     processData=True
     print(f"startMeasurement({acqTime}, {measTime}, '{clogPath}', {processData})...")

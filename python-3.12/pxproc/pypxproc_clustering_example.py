@@ -8,6 +8,9 @@
 # - The acqTime is irelevant on data-driven devices like Tpx3/Tpx4, only start/finish callbacks depending on it,
 # but on frame-only devs like as Tpx/Tpx2 it must be small to prevent clusters overlap, if too small, measurement time efficiency rapidly falls.
 
+# Warning: Measuring immediately after core start can cause power-on artifacts in data.
+# It is recommended to do some dummy measurement or wait some seconds before measuring.
+
 import sys, os, traceback, time
 
 outPath = "test-files" # Output path for saving.

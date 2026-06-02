@@ -29,7 +29,6 @@ for n in range(len(devices)):
 
 if devices[0].fullName()=="FileDevice 0":
     print("  No devices connected")
-    pixet.exitPixet()
     pypixet.exit()
     exit()
     
@@ -49,6 +48,7 @@ except: # device with every pixel OPMs (modify for other than Timepix)
     print("   This device have pixels separately configurable and OPM can be set using the pixCfg object")
 print("---------------------------------")
       
+parSet = pixet.params() # Get the parameters set object to get the paths and other settings
 print("ApplicationDirectory: Full path to the core library:\n  ", parSet.getValue("ApplicationDirectory"))
 print()
 print("ApplicationDataDirectory: Full path to general data loading/saving:\n  ", parSet.getValue("ApplicationDataDirectory"))
@@ -62,9 +62,9 @@ print("LoggingDirectory: Full path where logs are saved:\n  ", parSet.getValue("
 print("   (If not exist, created automatically at the pixet core start)")
 print()
 print("ConfigsDirectory: Full path to configs loading/saving:\n  ", parSet.getValue("ConfigsDirectory"))
-print("   (When the pixet.exitPixet() method is used, the Pixet core save actual config here.")
-print("   In the future, when the pixet.start() used, the Pixet core loads this.")
-print("   If not exist, and pixet.exitPixet() method used, the Pixet core create it.)")
+print("   (When the pypixet.exit() method is used, the Pixet core save actual config here.")
+print("   In the future, when the pypixet.start() used, the Pixet core loads this.")
+print("   If not exist, and pypixet.exit() method used, the Pixet core create it.)")
 print()
 print("CreateFileDevice: Create 'File device 0' if not real dev detected:\n  ", parSet.getValue("CreateFileDevice"))
 print()
