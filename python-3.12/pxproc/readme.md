@@ -8,7 +8,7 @@ from clusters detected in the input data.
 **Warning:** Online processing can cause data loss due to insufficient computing power. 
 
 Example (online): 
-'''python
+```python
 import pypixet, pypxproc 
 print("pixet core init...") 
 pypixet.start() 
@@ -16,13 +16,13 @@ pixet=pypixet.pixet
 devices = pixet.devicesByType(pixet.PX_DEVTYPE_TPX3) 
 dev = devices[0] 
 si = pypxproc.SpectraImaging(dev.asIDev()) 
-'''
+```
 
 Example (offline): 
-'''python
+```python
 import pypxproc 
 si = pypxproc.SpectraImaging()
-'''
+```
 
 **Steps for using this object in the online mode:**
 1. Initialize the Pixet core and create the device object (skip core init if starting from the Pixet program). 
