@@ -100,7 +100,6 @@ unsigned* frame32b1 = nullptr;
 unsigned* frame32b2 = nullptr;
 unsigned pixelsBuffSize = 100000000;
 Tpx3Pixel* measuredPixels = nullptr;
-RawTpx3Pixel* measuredRawPixels = nullptr;
 
 template <typename T, typename U> void showSampleData(const T* data1, const U* data2, const char* prefix="") { // ========
 	T data1Min = std::numeric_limits<T>::max(), data1Max = std::numeric_limits<T>::min();
@@ -154,8 +153,6 @@ void clbFrameMeasured(intptr_t acqCount, intptr_t userData) { // ===============
 
 }
 
-bool useRawPixels = true;
-
 void clbAcqEventFunc(intptr_t eventData, intptr_t userData) { // ==================================
     cout << "***\tAcqEventFunc: eventData:" << eventData << ", userData:'" << (char*)userData << "'\n";
     static int totalPixels = 0;
@@ -170,60 +167,30 @@ void clbAcqEventFunc(intptr_t eventData, intptr_t userData) { // ===============
         size = pixelsBuffSize;
     }
 	if (received < 1) { cout << "\ttotal:" << totalPixels << " (No pixels received in this clb)\n"; return; }
-    if (useRawPixels) {
-        // pxcGetMeasuredRawTpx3Pixels(unsigned deviceIndex, RawTpx3Pixel* pixels, unsigned pixelCount);
-		rc = pxcGetMeasuredRawTpx3Pixels(devIdx, measuredRawPixels, size);
-		errHandler(rc, "pxcGetMeasuredRawTpx3Pixels", true, "\t");
-		/*typedef struct _RawTpx3Pixel {
-            u32 index:      24;
-            u64 toa:        64;
-            u8 overflow:   1;
-            u8 ftoa:       5;
-            u16 tot:        10;
-        } RawTpx3Pixel;*/
-		uint64_t toaMin = UINT64_MAX, toaMax = 0;
-		uint16_t totMin = UINT16_MAX, totMax = 0;
-		int8_t ftoaMin = 127, ftoaMax = -128;
-		uint8_t ovrMin = 255, ovrMax = 0;
-		for (unsigned i = 0; i < size; i++) {
-			if (measuredRawPixels[i].toa < toaMin) toaMin = measuredRawPixels[i].toa;
-			if (measuredRawPixels[i].toa > toaMax) toaMax = measuredRawPixels[i].toa;
-			if (measuredRawPixels[i].tot < totMin) totMin = measuredRawPixels[i].tot;
-			if (measuredRawPixels[i].tot > totMax) totMax = measuredRawPixels[i].tot;
-			if ((int8_t)measuredRawPixels[i].ftoa < ftoaMin) ftoaMin = (int8_t)measuredRawPixels[i].ftoa;
-			if ((int8_t)measuredRawPixels[i].ftoa > ftoaMax) ftoaMax = (int8_t)measuredRawPixels[i].ftoa;
-			if (measuredRawPixels[i].overflow < ovrMin) ovrMin = measuredRawPixels[i].overflow;
-			if (measuredRawPixels[i].overflow > ovrMax) ovrMax = measuredRawPixels[i].overflow;
-		}
-		cout << "\tRaw pixels " << size << "/" << received << ": total:" << totalPixels << " ToA min-max:" << toaMin << "-" << toaMax << " [25 ns]\n";
-		cout << "\tToT min-max:" << totMin << "-" << totMax << " ticks" << " fToA min-max:" << (int)ftoaMin << "-" << (int)ftoaMax << " [1/640 MHz] overflow min-max:" << (int)ovrMin << "-" << (int)ovrMax << "\n";
 
-
-    } // else {
-        // pxcGetMeasuredTpx3Pixels(unsigned deviceIndex, Tpx3Pixel* pixels, unsigned pixelCount);
-        rc = pxcGetMeasuredTpx3Pixels(devIdx, measuredPixels, size);
-        errHandler(rc, "pxcGetMeasuredTpx3Pixels", true, "\t");
-        double toaMin = 1e100, toaMax = -1e100;
-        float totMin = 65535, totMax = 0;
-        float totCalibMin = 1e10, totCalibMax = -1e10;
-        for (unsigned i = 0; i < size; i++) {
-            if (measuredPixels[i].toa < toaMin) toaMin = measuredPixels[i].toa;
-            if (measuredPixels[i].toa > toaMax) toaMax = measuredPixels[i].toa;
-            if (measuredPixels[i].tot < totMin) totMin = measuredPixels[i].tot;
-            if (measuredPixels[i].tot > totMax) totMax = measuredPixels[i].tot;
-        }
-        // pxcCalibrateTpx3PixelsAndFilter(unsigned deviceIndex, Tpx3Pixel* pixels, unsigned* pixelCount, double minEnergy, double maxEnergy);
-        rc = pxcCalibrateTpx3PixelsAndFilter(devIdx, measuredPixels, &size, 20, 1e10);
-        errHandler(rc, "pxcCalibrateTpx3PixelsAndFilter", true, "\t");
-        for (unsigned i = 0; i < size; i++) {
-            if (measuredPixels[i].tot < totCalibMin) totCalibMin = measuredPixels[i].tot;
-            if (measuredPixels[i].tot > totCalibMax) totCalibMax = measuredPixels[i].tot;
-        }
-        cout.precision(2);
-        cout << scientific;
-        cout << "\tProcessed " << size << "/" << received << ": total:" << totalPixels << " ToA min-max:" << toaMin << "-" << toaMax << " ns\n";
-        cout << "\tToT min-max:" << fixed << totCalibMin << "-" << totCalibMax << " ticks; Energy (ToT calib) min-max:" << scientific << totCalibMin << "-" << totCalibMax << " keV\n";
-    //}
+    // pxcGetMeasuredTpx3Pixels(unsigned deviceIndex, Tpx3Pixel* pixels, unsigned pixelCount);
+    rc = pxcGetMeasuredTpx3Pixels(devIdx, measuredPixels, size);
+    errHandler(rc, "pxcGetMeasuredTpx3Pixels", true, "\t");
+    double toaMin = 1e100, toaMax = -1e100;
+    float totMin = 65535, totMax = 0;
+    float totCalibMin = 1e10, totCalibMax = -1e10;
+    for (unsigned i = 0; i < size; i++) {
+        if (measuredPixels[i].toa < toaMin) toaMin = measuredPixels[i].toa;
+        if (measuredPixels[i].toa > toaMax) toaMax = measuredPixels[i].toa;
+        if (measuredPixels[i].tot < totMin) totMin = measuredPixels[i].tot;
+        if (measuredPixels[i].tot > totMax) totMax = measuredPixels[i].tot;
+    }
+    // pxcCalibrateTpx3PixelsAndFilter(unsigned deviceIndex, Tpx3Pixel* pixels, unsigned* pixelCount, double minEnergy, double maxEnergy);
+    rc = pxcCalibrateTpx3PixelsAndFilter(devIdx, measuredPixels, &size, 20, 1e10);
+    errHandler(rc, "pxcCalibrateTpx3PixelsAndFilter", true, "\t");
+    for (unsigned i = 0; i < size; i++) {
+        if (measuredPixels[i].tot < totCalibMin) totCalibMin = measuredPixels[i].tot;
+        if (measuredPixels[i].tot > totCalibMax) totCalibMax = measuredPixels[i].tot;
+    }
+    cout.precision(2);
+    cout << scientific;
+    cout << "\tProcessed " << size << "/" << received << ": total:" << totalPixels << " ToA min-max:" << toaMin << "-" << toaMax << " ns\n";
+    cout << "\tToT min-max:" << fixed << totMin << "-" << totMax << " ticks; Energy (ToT calib) min-max:" << scientific << totCalibMin << "-" << totCalibMax << " keV\n";
 }
 
 int main() { // ===================================================================================
@@ -298,11 +265,7 @@ int main() { // ================================================================
     frame16b = new unsigned short[devPixelsCount];
 	frame32b1 = new unsigned[devPixelsCount];
 	frame32b2 = new unsigned[devPixelsCount];
-    if (useRawPixels) {
-		measuredRawPixels = new RawTpx3Pixel[pixelsBuffSize];
-	} //else {
-        measuredPixels = new Tpx3Pixel[pixelsBuffSize];
-    //}
+    measuredPixels = new Tpx3Pixel[pixelsBuffSize];
 
 	cout << "Warning: Measuring immediately after init may cause the first data contains power-on artefacts.\n";
 
@@ -336,7 +299,6 @@ int main() { // ================================================================
 
             if (rc == 0) showSampleData(frameDouble, frame16b);
 
-            measuredPixels = new Tpx3Pixel[pixelsBuffSize];
             cout << "pxcMeasureTpx3DataDrivenMode...\n";
             // pxcMeasureTpx3DataDrivenMode(unsigned deviceIndex, double measTime, const char* fileName, unsigned trgStg = PXC_TRG_NO, AcqEventFunc callback = 0, intptr_t userData = 0);
             rc = pxcMeasureTpx3DataDrivenMode(devIdx, 20, "", PXC_TRG_NO, clbAcqEventFunc, (intptr_t)&devName);
