@@ -16,7 +16,7 @@ The Clustering object is designed for easy work with clusters of the pixels. Typ
 ---
 **loadCalibrationFromDevice()** Load the calibration data from IDev connected to the Cl.  
 **loadCalibrationFromFiles(path)** Loads ABCT calibration from single XML file. Device config file can be used.  
-**loadCalibrationFromFiles("pathA|pathB|pathC|pathT")** Load ABCT calibration data from set of text files. 
+**loadCalibrationFromFiles("pathA|pathB|pathC|pathT")** Load ABCT calibration data from set of text files.  
 **isCalibrationLoaded()** Returns 1 if calibration is loaded or 0 if not.  
 
 **replayData(pathIn, pathOut, blocking)** Process data from the input file.  
