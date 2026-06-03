@@ -14,10 +14,10 @@ The Clustering object is designed for easy work with clusters of the pixels. Typ
 
 ### The Clustering methods 
 ---
-**loadCalibrationFromDevice()** Load the calibration data from IDev connected to the Cl. 
-**loadCalibrationFromFiles(path)** Loads ABCT calibration from single XML file. Device config file can be used. 
+**loadCalibrationFromDevice()** Load the calibration data from IDev connected to the Cl.  
+**loadCalibrationFromFiles(path)** Loads ABCT calibration from single XML file. Device config file can be used.  
 **loadCalibrationFromFiles("pathA|pathB|pathC|pathT")** Load ABCT calibration data from set of text files. 
-**isCalibrationLoaded()** Returns 1 if calibration is loaded or 0 if not. 
+**isCalibrationLoaded()** Returns 1 if calibration is loaded or 0 if not.  
 
 **replayData(pathIn, pathOut, blocking)** Process data from the input file.  
 * Input can be tpx3 pixels: t3pa, t3r, t3p.  
@@ -56,17 +56,18 @@ print("meas. end, rc:", rc, "(0 is OK)")
 
 ### The Clustering properties 
 ---
-**messageCallback** Name of the callback function for message receiving (errCode, messageString). 
-**progressCallback** Name of the callback function for process progress monitoring (progPercent, finishedNum). Occurs approximately twice per second.
+**messageCallback** Name of the callback function for message receiving (errCode, messageString).  
+**progressCallback** Name of the callback function for process progress monitoring (progPercent, finishedNum). Occurs approximately twice per second.  
 
-**acqStartedCallback** Name of the callback function for acquisition started (acqIndex). Can make sense only with frame-based devices.
-**acqFinishedCallback** Name of the callback function for acquisition finished (acqIndex). Can make sense only with frame-based devices.
-**newClustersCallback** Name of the callback function for new clusters parameters using (clusters, acqIndex). 
-**newClustersWithPixelsCallback** Name of callback function for new clusters data processing (clusters, acqIndex).
+**acqStartedCallback** Name of the callback function for acquisition started (acqIndex). Can make sense only with frame-based devices.  
+**acqFinishedCallback** Name of the callback function for acquisition finished (acqIndex). Can make sense only with frame-based devices.  
+**newClustersCallback** Name of the callback function for new clusters parameters using (clusters, acqIndex).  
+**newClustersWithPixelsCallback** Name of callback function for new clusters data processing (clusters, acqIndex).  
 
 The callback parameter “clusters” get the **Clusters object**. This can be simply used like us array to get the Cluster object. The Cluster object from the newClustersWithPixelsCallback can be used to get array of the Pixel objects.
 
 ### The Clusters object 
+---
 The Clustering object have the callback functions named newClustersCallback and newClustersWithPixelsCallback. 
 His first parameter can be used to get the Clusters object containing a clusters. Normally is used as an array of the Cluster objects. 
 **Example:**
