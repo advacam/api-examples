@@ -33,11 +33,13 @@ The Clustering object is designed for easy work with clusters of the pixels. Typ
 **isCalibrationLoaded()** Returns 1 if calibration is loaded or 0 if not.  
 
 **replayData(pathIn, pathOut, blocking)** Process data from the input file.  
-* Input can be tpx3 pixels: t3pa, t3r, t3p.  
-* Process the data and calls the corresponding callbacks for further cluster processing.  
-* If calibration is loaded, energy values will be calibrated.  
-* If the output path defined and ending with .clog, cluster log will be saved.  
-* If the blocking is true, program wait to process end, if false, processing is started in a separate thread.  
+Process the data and calls the corresponding callbacks for further cluster processing.  
+If calibration is loaded, energy values will be calibrated.  
+If the output path defined and ending with .clog, cluster log will be saved.  
+* **pathIn:** Input can be tpx3 pixels: t3pa, t3r, t3p.  
+* **pathOut:** Optional output file: clog.  
+* **blocking** If true, program wait to process end, if false, processing is started in a separate thread.  
+
 
 Example:
 ```python
@@ -252,7 +254,8 @@ Multi-frame one file format can be used or more filenames.
 The step size [keV] and count depends on previous used setMeasParams method.  
 
 **BSTG (Binary SeTtinGs and data) files:**  
-Save and reuse a processed data: See the BSTG workflows in SI introduction the SpectraImg object 
+Save and reuse a processed data: See the BSTG workflow in [The SpectraImg workflows](#the-spectraimg-workflows)  
+
 **loadFromFile(path)** Load the previous measured+processed data and device configuration from the BSTG file.  
 **saveToFile(path)** Save the measured and processed data and device configuration to the BSTG file.  
 
