@@ -1,3 +1,17 @@
+# Table of contents
+- [The pypxproc object](#The-pypxproc-object)
+  - [The Clustering object](#the-cluster-object)
+    - [The Clustering methods](#the-clustering-methods)
+    - [The Clustering properties](#the-clustering-properties)
+    - [The Clusters object](#the-clusters-object)
+      - [The pixel object](#the-pixel-object)
+- [The SpectraImg object](#the-spectraimg-object)
+  - [The SpectraImg workflows](#the-spectraimg-workflows)
+  - [SpectraImg auxiliary methods and properties](#spectraimg-auxiliary-methods-and-properties)
+  - [Spectraimg measurement and related methods](#spectraimg-measurement-and-related-methods)
+  - [Spectraimg data output](#spectraimg-data-output)
+  - [Spectraimg and data files](#spectraimg-and-data-files)
+
 # The pypxproc object
 This object can create data processing objects that can work with clusters from data that comes best from data-driven mode.  
 **Clustering(dev)** Get the Clustering object. It can processing a single clusters to looking for interesting single particles and the like.  
@@ -120,7 +134,8 @@ Example (offline):
 import pypxproc 
 si = pypxproc.SpectraImaging()
 ```
-
+### The SpectraImg workflows
+---
 **Steps for using this object in the online mode:**
 1. Initialize the Pixet core and create the device object (skip core init if starting from the Pixet program). 
 2. Optionally use the sensor refresh or dummy acq. 
@@ -147,6 +162,101 @@ si = pypxproc.SpectraImaging()
 1. After processing is complete (end of waiting steps above), use the saveToFile("file.bstg") method. 
 2. Anytime use the loadFromFile("file.bstg") method and continue using the data as it was processed. 
 
-# See:
+### SpectraImg auxiliary methods and properties
+---
+**loadCalibrationFrom...** See [The clustering methods](#the-clustering-methods)
+**messageCallback** Name of the callback function for message receiving (errCode, messageString).  
+**progressCallback** Name of the callback function for process progress monitoring (progPercent, finishedNum). Occurs approximately twice per second.  
+
+**measuredPixelsPerSecond()** Returns actual measuring speed in pixels per second while measuring. 
+**processedPixelsPerSecond()** Returns actual data processing speed in pixels per second while measuring. 
+
+### Spectraimg measurement and related methods
+---
+**setMeasParams(from, to, step, maskNP, doSPC)** Sets spectral parameters of future data processing.  
+* **from:**   Spectral range start [keV] (int only).  
+* **to:**     Spectral range end [keV] (int only).  
+* **step:**   Step width in the spectrum [keV] (float, but values significantly <1 do not work correctly).  
+          The from/to/step are source of energy indexes used in get… methods listed bellow. 
+* **maskNP:** Mask (true) or not mask (false) noisy pixels. (Measure only, ignored in replay) 
+* **doSPC:**  Perform (true) or not perform (false) subpixel correction. (influence to sumFrame)  
+  
+**setXrfParams(minVol, maxVol, distance, toaDiff, reserved, correctXrf)** Set X-ray fluorescence corr. parameters. 
+* **minVol:** Minimum XRF cluster volume (energy).  
+* **maxVol:** Maximum XRF cluster volume (energy).  
+* **distance:** Fluorescent pixels maximal distance.  
+* **toaDiff:** Fluorescent pixels time difference (depends on chip material and thickness).  
+* **reserved:** Reserved for future use: enable Remove XRF events.  
+* **correctXrf:** Enable (true) or disable (false) XRF correction. Detected XRF energy will replaced by 25 keV.  
+
+**startMeasurement(acqTime, measTime, pathOut, processData)** Start the measurement (physical device).  
+Measurement works in the background. Use while-isRunning() to wait for end, if need it.  
+* **measTime:** Total time of the measurement.  
+* **acqTime:** Single frame time. Used only on frame-based devices (Applicable on Timepix/Tpx2, not on Tpx3/Tpx4).  
+           Use a short enough time to prevent clusters overlapping. Too short time can cause too many lost time.  
+           Use acqTime=measTime on data-driven devices.  
+* **pathOut:** Output file path. Must ends with .clog.  
+* **processData:** True/false, enable/disable online processing.  
+    Warning: Online processing can cause data loss due to insufficient computing power.  
+
+**replayData(pathIn, pathOut, reserved)** Use data from the input file like as in measuring.  
+Input can be pixels: t3pa, t3r, t3p, frames: pmf, txt, h5, bmf, plog, or clog. 
+Processes the data from input file and calls the corresponding callbacks.  
+If calibration is loaded, energy values will be calibrated.  
+If the output path defined and ending with .clog, cluster log will be saved.  
+The process works in the background. Use while-isRunning() to wait for end, if need it.  
+ 
+**Example:** `si.replayData("input.t3pa", "output.clog", 0)`  
+ 
+**isRunning():** Returns 1 if process is running or 0 if not.  
+**abort():**  Abort the meas/process.  
+ 
+**Data processing note:**  
+   Measurement (with processData=True) and relapy data first identify a clusters, using XRF parameters, next divides clusters into groups according to MeasParams.  
+
+### Spectraimg data output
+---
+**getFrameForEnergy(energyIndex, sumFrame, normalize, zoom)** Returns image from selected energy range.  
+Returned frame is 2-dimmensional array with sizes of the sensor multiplied by the zoom factor.  
+* **energyIndex:** Index of energy range. Ranges must be set using the setMeasParams method. 
+* **sumFrame:** Gets summary frame (True) and ignore index or gets the single energy range (False). 
+* **normalize:** Enable normalize of the image (True/False). 
+* **zoom:** Zoom factor of sumFrame. Usable values are 1 and 2. 
+      Single energies not zoomed, but allowed values are 1/2 too. 
+ 
+**Example:** `frame = si.getFrameForEnergy(13, False, False, 1)`  
+ 
+**getFrameForEnergyRange(energyFromIndex, energyToIndex, normalize)** Returns image from selected energy range.  
+Returned frame is 2-dimmensional array with sizes of the sensor with sum from the selected ranges.  
+* **energyFromIndex:** Index of first energy range. Ranges must be set using the setMeasParams method.  
+* **energyToIndex:**  Index of last energy range. Ranges must be set using the setMeasParams method.  
+* **normalize:**  Enable normalize of the image (True/False).  
+ 
+**getGlobalSpectrum()** Gets the global energy spectrum. Returns the spectrum array and step size.  
+   Array size and step size [keV] is depends on previous used setMeasParams method. 
+ 
+**Example:** `spectrum, step = si.getGlobalSpectrum()`  
+ 
+**getGlobalSpectrumInRect(left, top, right, bottom)** Same us the getGlobalSpectrum() but in the rectangle 
+defined by corners positions.   
+**Example:** `spectrum, step = si.getGlobalSpectrumInRect(x1, y1, x2, y2)`  
+
+Note:  The smaller the rectangle, the more data is needed.  
+
+### Spectraimg and data files
+---
+**saveSumFrame(path, zoom, correct)** Save all data to one text frame. Zoom 1/2/3. Sub-pixels correction True/False.  
+The txt ASCII matrix file with space separated decimal float numbers at lines.  
+**saveDataAsFramesToFile(filePath, oneFile)** Save all spectrum bins data to the frame file(s).  
+Multi-frame one file format can be used or more filenames.  
+**saveDataAsSpectrumToFile(path)** Save text file with tab-separated cols for all energy steps and lines for all pixels.  
+The step size [keV] and count depends on previous used setMeasParams method.  
+
+**BSTG (Binary SeTtinGs and data) files:**  
+Save and reuse a processed data: See the BSTG workflows in SI introduction the SpectraImg object 
+**loadFromFile(path)** Load the previous measured+processed data and device configuration from the BSTG file.  
+**saveToFile(path)** Save the measured and processed data and device configuration to the BSTG file.  
+
+# Related:
 * https://wiki.advacam.cz/wiki/Pixet_SDK#Cluster_processing
 * https://wiki.advacam.cz/wiki/Pixet_SDK#Spectral_imaging
