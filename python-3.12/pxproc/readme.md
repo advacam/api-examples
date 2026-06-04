@@ -1,10 +1,10 @@
 # Table of contents
 - [The pypxproc object](#The-pypxproc-object)
-  - [The Clustering object](#the-cluster-object)
-    - [The Clustering methods](#the-clustering-methods)
-    - [The Clustering properties](#the-clustering-properties)
+- [The Clustering object](#the-cluster-object)
+  - [The Clustering methods](#the-clustering-methods)
+  - [The Clustering properties](#the-clustering-properties)
     - [The Clusters object](#the-clusters-object)
-      - [The pixel object](#the-pixel-object)
+    - [The pixel object](#the-pixel-object)
 - [The SpectraImg object](#the-spectraimg-object)
   - [The SpectraImg workflows](#the-spectraimg-workflows)
   - [SpectraImg auxiliary methods and properties](#spectraimg-auxiliary-methods-and-properties)
@@ -78,7 +78,8 @@ print("meas. end, rc:", rc, "(0 is OK)")
 
 The callback parameter “clusters” get the **Clusters object**. This can be simply used like us array to get the Cluster object. The Cluster object from the newClustersWithPixelsCallback can be used to get array of the Pixel objects.
 
-## The Clusters object  
+### The Clusters object  
+---
 The Clustering object have the callback functions named newClustersCallback and newClustersWithPixelsCallback. 
 His first parameter can be used to get the Clusters object containing a clusters. Normally is used as an array of the Cluster objects. 
 **Example:**
@@ -88,7 +89,8 @@ def newClustersCb(clusters, acqIndex):
         cluster = clusters[i]
 ```
 
-## The Cluster object  
+### The Cluster object 
+---
 The Cluster object contains a single cluster data. Total size, total energy, position, roundness and can include list of his pixels. 
 * **id** Order number of the cluster.
 * **toa** Time of arrival of first cluster’s pixel.
@@ -99,13 +101,14 @@ The Cluster object contains a single cluster data. Total size, total energy, pos
 * **e** Total energy in the cluster. If the calibration loaded, e is energy in keV, if not, e is sum of pixels ToTs.
 * **pixels** Array of the Pixel objects. Filled only if the cluster is from the newClustersWithPixelsCallback.
 
-## The Pixel object 
+### The Pixel object 
+---
 Single pixel data from the cluster which was obtained from the newClustersWithPixelsCallback. 
 * **toa** Time of arrival of first cluster’s pixel.
 * **x, y** Position of the pixel.
 * **e** Energy absorbed in the pixel. If the calibration loaded, e is energy in keV, if not, e is the ToT value.
 
-# The SpectraImg object 
+## The SpectraImg object 
 The SpectraImg is designed for easy working with an energy spectras. It can work with 
 previous saved data using the **replayData** method or with physical device. For offline mode 
 create the SpectraImg using **pypxproc.SpectraImaging()**. For online mode, the device must be 
@@ -130,7 +133,8 @@ Example (offline):
 import pypxproc 
 si = pypxproc.SpectraImaging()
 ```
-## The SpectraImg workflows
+### The SpectraImg workflows
+---
 **Steps for using this object in the online mode:**
 1. Initialize the Pixet core and create the device object (skip core init if starting from the Pixet program). 
 2. Optionally use the sensor refresh or dummy acq. 
@@ -157,7 +161,8 @@ si = pypxproc.SpectraImaging()
 1. After processing is complete (end of waiting steps above), use the saveToFile("file.bstg") method. 
 2. Anytime use the loadFromFile("file.bstg") method and continue using the data as it was processed. 
 
-## SpectraImg auxiliary methods and properties
+### SpectraImg auxiliary methods and properties
+---
 **loadCalibrationFrom...** See [The clustering methods](#the-clustering-methods)
 **messageCallback** Name of the callback function for message receiving (errCode, messageString).  
 **progressCallback** Name of the callback function for process progress monitoring (progPercent, finishedNum). Occurs approximately twice per second.  
@@ -165,7 +170,8 @@ si = pypxproc.SpectraImaging()
 **measuredPixelsPerSecond()** Returns actual measuring speed in pixels per second while measuring. 
 **processedPixelsPerSecond()** Returns actual data processing speed in pixels per second while measuring. 
 
-## Spectraimg measurement and related methods
+### Spectraimg measurement and related methods
+---
 **setMeasParams(from, to, step, maskNP, doSPC)** Sets spectral parameters of future data processing.  
 * **from:**   Spectral range start [keV] (int only).  
 * **to:**     Spectral range end [keV] (int only).  
@@ -207,7 +213,8 @@ The process works in the background. Use while-isRunning() to wait for end, if n
 **Data processing note:**  
    Measurement (with processData=True) and relapy data first identify a clusters, using XRF parameters, next divides clusters into groups according to MeasParams.  
 
-## Spectraimg data output
+### Spectraimg data output
+---
 **getFrameForEnergy(energyIndex, sumFrame, normalize, zoom)** Returns image from selected energy range.  
 Returned frame is 2-dimmensional array with sizes of the sensor multiplied by the zoom factor.  
 * **energyIndex:** Index of energy range. Ranges must be set using the setMeasParams method. 
@@ -235,7 +242,8 @@ defined by corners positions.
 
 Note:  The smaller the rectangle, the more data is needed.  
 
-## Spectraimg and data files
+### Spectraimg and data files
+---
 **saveSumFrame(path, zoom, correct)** Save all data to one text frame. Zoom 1/2/3. Sub-pixels correction True/False.  
 The txt ASCII matrix file with space separated decimal float numbers at lines.  
 **saveDataAsFramesToFile(filePath, oneFile)** Save all spectrum bins data to the frame file(s).  
