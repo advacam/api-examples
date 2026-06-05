@@ -18,11 +18,11 @@ This object can create data processing objects that can work with clusters extra
 It can create **2 kinds of processing objects**:  
 
 **Clustering object** - It can processing a single clusters to looking for interesting single particles and the like.  
-![Single clusters extraction illustration](https://wiki.advacam.cz/images/f/fe/Clustering-example.png)
+![Single clusters extraction illustration](https://wiki.advacam.cz/images/f/fe/Clustering-example.png)  
 Call the **cl = Clustering(dev)** to get the Clustering object.  
 <br>
 **Spectral Imaging object** - It can process many clusters into pixels in images, select clusters by energy range, or sort to energy channels..  
-![Clusters to pixels iluustration](https://wiki.advacam.cz/images/0/09/SpectralImg-example.png)
+![Clusters to pixels iluustration](https://wiki.advacam.cz/images/0/09/SpectralImg-example.png)  
 Call the **si = SpectraImaging(dev)** to get the SpectraImg object.  
 <br>
 The methods listed above can be used with or without parameter. If not used, only offline processing is possible.  
