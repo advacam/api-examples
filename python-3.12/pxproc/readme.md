@@ -15,13 +15,15 @@
 # The pypxproc object
 This object can create data processing objects that can work with clusters extracted from measured data. Best source is measuring in data-driven mode. A frame-only devices can be used too, but many compromises are at this way.  
   
-It can create 2 processing objects:  
+It can create **2 kinds of processing objects**:  
 
-![](https://wiki.advacam.cz/images/f/fe/Clustering-example.png)
-**Clustering(dev)** Get the Clustering object. It can processing a single clusters to looking for interesting single particles and the like.  
-<br><br>
-![](https://wiki.advacam.cz/images/0/09/SpectralImg-example.png)
-**SpectraImaging(dev)** Get the SpectraImg object. It can process many clusters into pixels in images, select clusters by energy range, or sort to energy channels..  
+**Clustering object** - It can processing a single clusters to looking for interesting single particles and the like.  
+![Single clusters extraction illustration](https://wiki.advacam.cz/images/f/fe/Clustering-example.png)
+Call the **cl = Clustering(dev)** to get the Clustering object.  
+<br>
+**Spectral Imaging object** - It can process many clusters into pixels in images, select clusters by energy range, or sort to energy channels..  
+![Clusters to pixels iluustration](https://wiki.advacam.cz/images/0/09/SpectralImg-example.png)
+Call the **si = SpectraImaging(dev)** to get the SpectraImg object.  
 <br>
 The methods listed above can be used with or without parameter. If not used, only offline processing is possible.  
 
