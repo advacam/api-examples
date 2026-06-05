@@ -5,7 +5,7 @@
 # Notes:
 # - pypxproc is not standard part of API package, it is on demand.
 # - Device methods returning return codes, but the pypxproc methods raise exceptions.
-# - The acqTime is irelevant on data-driven devices like Tpx3,
+# - The acqTime is irelevant on data-driven devices like Tpx3/Tpx4,
 # but on frame-only devs like as Tpx/Tpx2 it must be small to prevent clusters overlap, if too small, measurement time efficiency rapidly falls.
 
 # Warning: Measuring immediately after core start can cause power-on artifacts in data.

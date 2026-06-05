@@ -20,9 +20,9 @@ os.environ["PATH"] = apiPath + ";" + os.environ["PATH"]
 # Alternatively use path to installed Pixet Pro, it cause sharing automatic configurations.
 # Or simply copy the script to Pixet or API directory and run it from there.
 
-measTime = 40
-meas1replay0 = 1
-minSize = 10
+measTime = 40       # Integrated measuring time [s] if measuring used.
+meas1replay0 = 1    # 1 - Measurement with online processing, 0 - Simply measure to file and process data from the file.
+minSize = 10        # Minimum cluster size to be shown in output, the smaller the more clusters are shown, but the output can be very long.
 
 import pypixet	# Requires pxcore.dll/so, this requires hwlib(s) of device(s),
                 # the hwlib can reguire other file(s).
@@ -33,19 +33,19 @@ def errTest(rc): # =============================================================
 
 #MessageCallback(error: int, message: str)
 def messageCb(error, msg): # ======================================================================
-    print(f"*** ErrCode: {error}, msg: {msg}")
+    print(f"*** ErrCode:{error}, msg:{msg}")
 
 #ProgressCallback(finished: bool, progress: float)
 def progressCb(finished, progress): # =============================================================
-    print(f"*** Progress: {progress:.2f} %, finished={finished}")
+    print(f"*** Progress:{progress:.2f} %, finished:{finished}")
 
 #AcqFinishedCallback(acqIndex: int)
 def acqFinishedCb(acqIndex): # ====================================================================
-    print(f"*** AcqFinished: acqIndex={acqIndex}")
+    print(f"*** AcqFinished: acqIndex:{acqIndex}")
 
 #AcqStartedCallback(acqIndex: int)
 def acqStartedCb(acqIndex): # =====================================================================
-    print(f"*** AcqStarted: acqIndex={acqIndex}")
+    print(f"*** AcqStarted: acqIndex:{acqIndex}")
 
 #NewClustersCallback(clusters: [Cluster], acqIndex: int) - clusters has empty pixels
 def newClustersCb(clusters, acqIndex): # ==========================================================

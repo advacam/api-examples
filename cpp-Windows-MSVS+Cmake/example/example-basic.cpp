@@ -32,7 +32,7 @@ target_link_libraries(example pxcore)
 //                      than change to PATH_TO_API again before exiting the core.
 // Notes:
 // - The pxcapi.h including common.h if it not in project directory, include it separatelly before the pxcapi.
-// - The pxcore.dll must be in directory wit the executable, eq. "../x64/Debug" in both cases.
+// - The pxcore.dll must be in directory with the executable, eq. "../x64/Debug" in both cases.
 //  Therefore, the easiest way is to copy the API package there so that it can be shared by all projects in the solution.
 
 #ifdef PATH_TO_API

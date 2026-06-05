@@ -1,61 +1,29 @@
 ﻿#include <iostream>
 #include <filesystem>  
 using namespace std;
-
-
-
-
-
-
-
-
-/*******************************
- 
-Warning - this is not complete       <<<-------------------------------
-
-*******************************/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // (c) 2026 Pavel Hudecek, Advacam, https://advacam.cz, https://wiki.advacam.cz/wiki/Binary_core_API
 //
 // This example: 1. Disable using calibration
 //               2. Measure some frames and save one to txt file
 //               3. Measure single frame using single-frame function
-//               4. Measure some frames and do something with it in the callback functions.
+//               4. Measure some frames and try get non-calibrated/calibrated data in the callback function. Calibrated not implemented for all dev types.
 //               5. Enable using calibration
 // 			     6. Measure some frames and save one to txt file
-// 
-// 
-// 
-// 
-//               2. measure in the data-driven mode and do something with the data in the callback functions.
-
-
+//               7. Measure single frame using single-frame calibrated function. Not implemented for all dev types.
+//               8. Measure some frames and try get non-calibrated/calibrated data in the callback function. Calibrated not implemented for all dev types.
+//               9. Measure in the data-driven mode, get and calibrate data in the callback function.
 
 /* Example CMakeList.txt, if You want to use CMake: -------------------------------------
 cmake_minimum_required(VERSION 3.10)
-project(example-callbacks)
+project(example-calib)
 
 # include_directories(${CMAKE_SOURCE_DIR})
 # link_directories(${CMAKE_SOURCE_DIR})
 add_library(pxcore SHARED IMPORTED)
 set_property(TARGET pxcore PROPERTY IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/pxcore.dll")
 set_property(TARGET pxcore PROPERTY IMPORTED_IMPLIB  "${CMAKE_SOURCE_DIR}/pxcore.lib")
-add_executable(example-callbacks example-callbacks.cpp)
-target_link_libraries(example-callbacks pxcore)
+add_executable(example-calib example-calib.cpp)
+target_link_libraries(example-calib pxcore)
 ---------------------------------------------------------------------------------------*/
 
 #define PATH_TO_API ../x64/Debug
@@ -71,7 +39,7 @@ target_link_libraries(example-callbacks pxcore)
 //                      than change to PATH_TO_API again before exiting the core.
 // Notes:
 // - The pxcapi.h including common.h if it not in project directory, include it separatelly before the pxcapi.
-// - The pxcore.dll must be in directory wit the executable, eq. "../x64/Debug" in both cases.
+// - The pxcore.dll must be in directory with the executable, eq. "../x64/Debug" in both cases.
 //  Therefore, the easiest way is to copy the API package there so that it can be shared by all projects in the solution.
 
 #ifdef PATH_TO_API
@@ -117,9 +85,13 @@ template <typename T, typename U> void showSampleData(const T* data1, const U* d
 	for (n = 0; n < devPixelsCount; n++) {
 		if (data1[n] < data1Min) data1Min = data1[n];
 		if (data1[n] > data1Max) data1Max = data1[n];
-		if (data2[n] < data2Min) data2Min = data2[n];
-		if (data2[n] > data2Max) data2Max = data2[n];
+        if (data2 != nullptr) {
+            if (data2[n] < data2Min) data2Min = data2[n];
+            if (data2[n] > data2Max) data2Max = data2[n];
+        }
 	}
+    if (data2 == nullptr) { data2Min = 0; data2Max = 0; }
+
 	cout << prefix << "Min-max: data1:" << data1Min << "-" << data1Max << " data2:" << data2Min << "-" << data2Max << "\n";
     n = devPixelsCount / 2 - 20;
     cout << prefix << "Sample frorm idx:" << n << " data1,data2 ----------------------------" << endl << "  ";
@@ -349,12 +321,7 @@ int main() { // ================================================================
 		    rc = pxcMeasureSingleFrameTpx2(devIdx, 1.0, frame32b1, frame32b2, &size, PXC_TRG_NO);
             errHandler(rc, "pxcMeasureSingleFrameTpx2");
 
-            cout << "Dada sample: idx:data1,data2 -------------------" << endl << "  ";
-			for (uint32_t n = size / 2 + devWidth/2 - 20; n < size / 2 + devWidth/2 + 20; n++) {
-				cout << n << ":" << frame32b1[n] << "," << frame32b2[n] << "  ";
-				if (n>3 && n % 6 == 0) cout << "\n  ";
-			}
-            cout << "\n------------------------------------------------\n";
+            if (rc == 0) showSampleData(frame32b1, frame32b2);
 
 			rc = pxcSetTimepix2CalibrationEnabled(devIdx, true);
 			errHandler(rc, "pxcSetTimepix2CalibrationEnabled-1");
@@ -374,12 +341,7 @@ int main() { // ================================================================
 			rc = pxcMeasureSingleCalibratedFrameTpx2(devIdx, 1.0, frameDouble, frame32b2, &size, PXC_TRG_NO);
             errHandler(rc, "pxcMeasureSingleCalibratedFrameTpx2");
 
-			cout << "Dada sample: idx:data1,data2 -------------------" << endl << "  ";
-			for (uint32_t n = size / 2 + devWidth/2 - 20; n < size / 2 + devWidth/2 + 20; n++) {
-				cout << n << ":" << frameDouble[n] << "," << frame32b2[n] << "  ";
-				if (n>3 && n % 6 == 0) cout << "\n  ";
-			}
-            cout << "\n------------------------------------------------\n";
+            if (rc == 0) showSampleData(frameDouble, frame32b2);
 
             break;
         case DevType::TPX:
@@ -401,12 +363,7 @@ int main() { // ================================================================
 		    rc = pxcMeasureSingleFrame(devIdx, 1.0, frame16b, &size, PXC_TRG_NO);
             errHandler(rc, "pxcMeasureSingleFrame");
 
-			cout << "Dada sample: idx:ToT -----------------------------" << endl << "  ";
-			for (uint32_t n = size / 2 + devWidth/2 - 20; n < size / 2 + devWidth/2 + 20; n++) {
-				cout << n << ":" << frame16b[n] << "  ";
-				if (n>3 && n % 8 == 0) cout << "\n  ";
-			}
-            cout << "\n------------------------------------------------\n";
+            if (rc == 0) showSampleData(frame16b, (unsigned*)nullptr);
 
 			rc = pxcSetTimepixCalibrationEnabled(devIdx, true);
 			errHandler(rc, "pxcSetTimepixCalibrationEnabled-1");
@@ -426,12 +383,7 @@ int main() { // ================================================================
             errHandler(rc, "pxcMeasureSingleFrame");
 			if (rc != 0) break;
 
-			cout << "Dada sample: idx:ToT -----------------------------" << endl << "  ";
-			for (uint32_t n = size / 2 + devWidth / 2 - 20; n < size / 2 + devWidth / 2 + 20; n++) {
-				cout << n << ":" << frame16b[n] << "  ";
-				if (n > 3 && n % 8 == 0) cout << "\n  ";
-			}
-            cout << "\n------------------------------------------------\n";
+            if (rc == 0) showSampleData(frameDouble, (unsigned*)nullptr);
 
             break;
         default:
