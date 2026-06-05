@@ -13,11 +13,21 @@
   - [Spectraimg and data files](#spectraimg-and-data-files)
 
 # The pypxproc object
-This object can create data processing objects that can work with clusters from data that comes best from data-driven mode.  
-**Clustering(dev)** Get the Clustering object. It can processing a single clusters to looking for interesting single particles and the like.  
-**SpectraImaging(dev)** Get the SpectraImg object. It can process many clusters into pixels in images, select clusters by energy range, or sort to energy channels..  
+This object can create data processing objects that can work with clusters extracted from measured data. Best source is measuring in data-driven mode. A frame-only devices can be used too, but many compromises are at this way.  
+  
+It can create 2 processing objects:  
 
-The methods listed above can be used with or without parameter. If not used, only offline processing is possible. 
+![](https://wiki.advacam.cz/images/f/fe/Clustering-example.png)
+**Clustering(dev)** Get the Clustering object. It can processing a single clusters to looking for interesting single particles and the like.  
+<br><br>
+![](https://wiki.advacam.cz/images/0/09/SpectralImg-example.png)
+**SpectraImaging(dev)** Get the SpectraImg object. It can process many clusters into pixels in images, select clusters by energy range, or sort to energy channels..  
+<br>
+The methods listed above can be used with or without parameter. If not used, only offline processing is possible.  
+
+**2 basic scenarios are available:**
+* **Online processing** - processing while measuring.  
+* **Offline processing** - processing data from files.  
 
 **Notes**:
 * It is **on demand**, not standard part of the API package
@@ -56,7 +66,7 @@ between frames. On data-driven devices (Timepix3, no Timepix), this is the ToA l
 * **pathOut:** Output file path. For data-driven devices (eq Timepix3) required pixel files: t3pa, t3r, t3p 
   For Frame-based devices (eq Medipix, Timepix) required cluster log files: clog 
 * **processData:** True/false, enable/disable online processing.  
-Warning: Online processing can cause data loss due to insufficient computing power.  
+Warning: Online processing on old computer can cause data loss due to insufficient computing power.  
 
 **isRunning()** Returns 1 if clustering process is running or 0 if not.  
 
@@ -65,7 +75,7 @@ Example:
 print("starting measurement...") 
 cl.startMeasurement(1, 100, "") 
 while cl.isRunning(): 
-    pass 
+    pass # better is using time.sleep
 print("meas. end, rc:", rc, "(0 is OK)") 
 ```
 
@@ -165,7 +175,7 @@ si = pypxproc.SpectraImaging()
 
 ### SpectraImg auxiliary methods and properties
 ---
-**loadCalibrationFrom...** See [The clustering methods](#the-clustering-methods)
+**loadCalibrationFrom...** See [The clustering methods](#the-clustering-methods)  
 **messageCallback** Name of the callback function for message receiving (errCode, messageString).  
 **progressCallback** Name of the callback function for process progress monitoring (progPercent, finishedNum). Occurs approximately twice per second.  
 

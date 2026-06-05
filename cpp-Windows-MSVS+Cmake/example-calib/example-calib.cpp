@@ -31,8 +31,17 @@ Warning - this is not complete       <<<-------------------------------
 
 // (c) 2026 Pavel Hudecek, Advacam, https://advacam.cz, https://wiki.advacam.cz/wiki/Binary_core_API
 //
-// This example: 1. measure some frames and do something with it in the callback in lambda fn.
-//               2. measure in the data driven mode and do something with the data in the callback in lambda fn.
+// This example: 1. Disable using calibration
+//               2. Measure some frames and save one to txt file
+//               3. Measure single frame using single-frame function
+//               4. Measure some frames and do something with it in the callback functions.
+//               5. Enable using calibration
+// 			     6. Measure some frames and save one to txt file
+// 
+// 
+// 
+// 
+//               2. measure in the data-driven mode and do something with the data in the callback functions.
 
 
 
@@ -270,13 +279,21 @@ int main() { // ================================================================
 	cout << "Warning: Measuring immediately after init may cause the first data contains power-on artefacts.\n";
 
 	unsigned size = devPixelsCount;
-    switch (devType) 
-        case DevType::TPX3: {
+    switch (devType) {
+        case DevType::TPX3: 
             rc = pxcSetTimepix3Mode(devIdx, PXC_TPX3_OPM_TOATOT);
             errHandler(rc, "pxcSetTimepix3Mode");
 
             rc = pxcSetTimepix3CalibrationEnabled(devIdx, false);
             errHandler(rc, "pxcSetTimepix3CalibrationEnabled-0");
+
+			cout << "pxcMeasureMultipleFrames...\n";
+            //pxcMeasureMultipleFrames(unsigned deviceIndex, unsigned frameCount, double frameTime, unsigned trgStg = PXC_TRG_NO);
+			rc = pxcMeasureMultipleFrames(devIdx, 3, 1.0, PXC_TRG_NO);
+            errHandler(rc, "pxcMeasureMultipleFrames");
+            //pxcSaveMeasuredFrame(deviceIndex, frameIndex, filename);
+            rc = pxcSaveMeasuredFrame(0, 1, "test-files/testImg-nocal.txt");
+            errHandler(rc, "pxcSaveMeasuredFrame nc");
 
             cout << "pxcMeasureSingleFrameTpx3...\n";
             //pxcMeasureSingleFrameTpx3(unsigned deviceIndex, double frameTime, double* frameToaITot, unsigned short* frameTotEvent, unsigned* size, unsigned trgStg = PXC_TRG_NO);
@@ -289,8 +306,16 @@ int main() { // ================================================================
             errHandler(rc, "pxcSetTimepix3CalibrationEnabled-1");
             rc = pxcIsTimepix3CalibrationEnabled(devIdx);
 			errHandler(rc, "pxcIsTimepix3CalibrationEnabled");
-            size = devPixelsCount;
 
+            cout << "pxcMeasureMultipleFrames...\n";
+            //pxcMeasureMultipleFrames(unsigned deviceIndex, unsigned frameCount, double frameTime, unsigned trgStg = PXC_TRG_NO);
+            rc = pxcMeasureMultipleFrames(devIdx, 3, 1.0, PXC_TRG_NO);
+            errHandler(rc, "pxcMeasureMultipleFrames");
+            //pxcSaveMeasuredFrame(deviceIndex, frameIndex, filename);
+            rc = pxcSaveMeasuredFrame(0, 1, "test-files/testImg-cal.txt");
+            errHandler(rc, "pxcSaveMeasuredFrame cal");
+
+            size = devPixelsCount;
             cout << "pxcMeasureSingleCalibratedFrameTpx3 (not implemented at this time)\n";
 
             cout << "pxcMeasureSingleFrameTpx3...\n";
@@ -312,6 +337,14 @@ int main() { // ================================================================
 			rc = pxcSetTimepix2CalibrationEnabled(devIdx, false);
 			errHandler(rc, "pxcSetTimepix2CalibrationEnabled-0");
 
+            cout << "pxcMeasureMultipleFrames...\n";
+            //pxcMeasureMultipleFrames(unsigned deviceIndex, unsigned frameCount, double frameTime, unsigned trgStg = PXC_TRG_NO);
+            rc = pxcMeasureMultipleFrames(devIdx, 3, 1.0, PXC_TRG_NO);
+            errHandler(rc, "pxcMeasureMultipleFrames");
+            //pxcSaveMeasuredFrame(deviceIndex, frameIndex, filename);
+            rc = pxcSaveMeasuredFrame(0, 1, "test-files/testImg-nocal.txt");
+            errHandler(rc, "pxcSaveMeasuredFrame nc");
+
             cout << "pxcMeasureSingleFrameTpx2...\n";
 		    rc = pxcMeasureSingleFrameTpx2(devIdx, 1.0, frame32b1, frame32b2, &size, PXC_TRG_NO);
             errHandler(rc, "pxcMeasureSingleFrameTpx2");
@@ -325,6 +358,15 @@ int main() { // ================================================================
 
 			rc = pxcSetTimepix2CalibrationEnabled(devIdx, true);
 			errHandler(rc, "pxcSetTimepix2CalibrationEnabled-1");
+
+            cout << "pxcMeasureMultipleFrames...\n";
+            //pxcMeasureMultipleFrames(unsigned deviceIndex, unsigned frameCount, double frameTime, unsigned trgStg = PXC_TRG_NO);
+            rc = pxcMeasureMultipleFrames(devIdx, 3, 1.0, PXC_TRG_NO);
+            errHandler(rc, "pxcMeasureMultipleFrames");
+            //pxcSaveMeasuredFrame(deviceIndex, frameIndex, filename);
+            rc = pxcSaveMeasuredFrame(0, 1, "test-files/testImg-cal.txt");
+            errHandler(rc, "pxcSaveMeasuredFrame cal");
+
             size = devPixelsCount;
 
             cout << "pxcMeasureSingleCalibratedFrameTpx2...\n";
@@ -347,6 +389,14 @@ int main() { // ================================================================
 			rc = pxcSetTimepixCalibrationEnabled(devIdx, false);
 			errHandler(rc, "pxcSetTimepixCalibrationEnabled-0");
 
+            cout << "pxcMeasureMultipleFrames...\n";
+            //pxcMeasureMultipleFrames(unsigned deviceIndex, unsigned frameCount, double frameTime, unsigned trgStg = PXC_TRG_NO);
+            rc = pxcMeasureMultipleFrames(devIdx, 3, 1.0, PXC_TRG_NO);
+            errHandler(rc, "pxcMeasureMultipleFrames");
+            //pxcSaveMeasuredFrame(deviceIndex, frameIndex, filename);
+            rc = pxcSaveMeasuredFrame(0, 1, "test-files/testImg-nocal.txt");
+            errHandler(rc, "pxcSaveMeasuredFrame nc");
+
 			cout << "pxcMeasureSingleFrame (Tpx)...\n";
 		    rc = pxcMeasureSingleFrame(devIdx, 1.0, frame16b, &size, PXC_TRG_NO);
             errHandler(rc, "pxcMeasureSingleFrame");
@@ -360,6 +410,14 @@ int main() { // ================================================================
 
 			rc = pxcSetTimepixCalibrationEnabled(devIdx, true);
 			errHandler(rc, "pxcSetTimepixCalibrationEnabled-1");
+
+            cout << "pxcMeasureMultipleFrames...\n";
+            //pxcMeasureMultipleFrames(unsigned deviceIndex, unsigned frameCount, double frameTime, unsigned trgStg = PXC_TRG_NO);
+            rc = pxcMeasureMultipleFrames(devIdx, 3, 1.0, PXC_TRG_NO);
+            errHandler(rc, "pxcMeasureMultipleFrames");
+            //pxcSaveMeasuredFrame(deviceIndex, frameIndex, filename);
+            rc = pxcSaveMeasuredFrame(0, 1, "test-files/testImg-cal.txt");
+            errHandler(rc, "pxcSaveMeasuredFrame cal");
 
 			cout << "pxcMeasureSingleCalibratedFrame (Tpx) is not implemented at this time\n";
 
