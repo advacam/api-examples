@@ -11,6 +11,8 @@ os.environ["PATH"] = apiPath + ";" + os.environ["PATH"]
 # Alternatively use path to installed Pixet Pro, it cause sharing automatic configurations.
 # Or simply copy the script to Pixet or API directory and run it from there.
 
+print("For more examples see https://github.com/advacam/api-examples/tree/main/python-3.12")
+
 import pypixet
 
 print("pixet core init...")
