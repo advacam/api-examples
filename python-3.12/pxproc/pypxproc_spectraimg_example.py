@@ -117,13 +117,13 @@ clogPath = os.path.join(outPath, "test.clog")
 bstgPath = os.path.join(outPath, "test.bstg")
 
 if meas1replay0==0:
-    print(f"delete file '{t3paPath}' if exists...")
+    """print(f"delete file '{t3paPath}' if exists...")
     try:
         if os.path.exists(t3paPath): os.remove(t3paPath)
         print("end")
     except:
         print(f"delete file '{t3paPath}' failed")
-        traceback.print_exc()
+        traceback.print_exc()"""
 
     rc = dev.setOperationMode(pixet.PX_TPX3_OPM_TOATOT)
     print("setOperationMode rc:", rc, "(0 is OK)")

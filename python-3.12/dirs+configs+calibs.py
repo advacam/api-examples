@@ -22,15 +22,18 @@ pixet=pypixet.pixet
 devices = pixet.devices()
 print("-----------------------------------------------------------------------------------")
 
-print("Devices list (idx, device name, chips count, [chips list], material:")
+chipTypes = ["(unknown 0)", "MXR", "TPX", "MPX3", "TPX3", "TPX2", "MPX4", "TPX4"]
+print("Devices list (idx, device name, [chips list], chip type, material:")
 for n in range(len(devices)):
     dev = devices[n]
-    print("  ", n, ":", dev.fullName(), dev.chipCount(), dev.chipIDs(), dev.sensorType(0))
+    print("  ", n, ":", dev.fullName(), dev.chipIDs(), chipTypes[dev.chipType()], dev.sensorType(0))
 
-if devices[0].fullName()=="FileDevice 0":
+if len(devices)==0 or devices[0].fullName()=="FileDevice 0":
     print("  No devices connected")
+    print("Exit pixet...")
     pypixet.exit()
     exit()
+    
     
 print()
 print("---------------------------------")
@@ -41,11 +44,11 @@ dev = devices[0]
 print("Operation modes management:")
 try:# device with whole chip operation mode (modify for other than Tpx3)
     dev.setOperationMode(pixet.PX_TPX3_OPM_TOA) # PX_TPX3_OPM_TOATOT PX_TPX3_OPM_EVENT_ITOT
-    print("   This device have common OPM for all and can use the setOperationMode method")
+    print("   This device has common OPM for all and can use the setOperationMode method")
 except: # device with every pixel OPMs (modify for other than Timepix)
     pixcfg = dev.pixCfg() # Create the pixels configuration object 
     pixcfg.setModeAll(pixet.PX_TPXMODE_TOT)
-    print("   This device have pixels separately configurable and OPM can be set using the pixCfg object")
+    print("   This device has pixels separately configurable and OPM can be set using the pixCfg object")
 print("---------------------------------")
       
 parSet = pixet.params() # Get the parameters set object to get the paths and other settings
@@ -54,9 +57,11 @@ print()
 print("ApplicationDataDirectory: Full path to general data loading/saving:\n  ", parSet.getValue("ApplicationDataDirectory"))
 print()
 print("FactoryDataDirectory: Full path to the factory data:\n  ", parSet.getValue("FactoryDataDirectory"))
-print("   (This directory is used to load the configuration using the device.loadFactoryConfig() method.")
+print("   (This directory is used to load the configuration using the device.loadFactoryConfig() method")
+print("   or if last saved config not found at startup.")
 print("   The installer or user must save the default configuration supplied with the device from the manufacturer here.)")
-print("   Note: If the device have internal NVM with default config (Minipix-Tpx3), this dirrectory is not used.")
+print("   Note: If the device has internal NVM with default config (Minipix-Tpx3), this directory is not required")
+print("   for loadFactoryConfig, but NVM is not used to load default config if last saved not found.")
 print()
 print("LoggingDirectory: Full path where logs are saved:\n  ", parSet.getValue("LoggingDirectory"))
 print("   (If not exist, created automatically at the pixet core start)")
@@ -77,11 +82,12 @@ print("isConfigInDeviceSupported():", rc)
 print("   Returns 1 if store of configuration data in the device is supported or 0 if not")
 print("   Result:")
 if rc==1:
-    print("   1: This device have internal non-volatile memory to save config using the saveConfigToDevice() method")
-    print("   and at the future load this config to the Pixet core using the loadConfigFromDevice() method.")
-    print("   Note: Normally there is stored factory config, but user can overwrite it (not recommended).")
+    print("   1: This device has internal non-volatile memory to save config using the saveConfigToDevice() method")
+    print("   and at the future load this config to the Pixet core using the loadConfigFromDevice() method,")
+    print("   or using the loadFactoryConfig() method if the factory config not found in factory directory.")
+    print("   Note: Normally there is stored factory config, but user can overwrite it (very not recommended).")
 else:
-    print("   0: This device haven't internal non-volatile memory to load/save config")
+    print("   0: This device hasn't internal non-volatile memory to load/save config")
     print("   for using with loadConfigFromDevice()/saveConfigToDevice() methods.")
 print()
 
@@ -91,15 +97,16 @@ if rc==1: # ConfigInDeviceSupported
     print("   Returns 1 if configuration data are stored in the device or 0 if memory is free")
     print("   Result:")
     if rc==1:
-        print("   1: The device have some config stored in the non-volatile memory")
-        print("   and this config can be used by the loadConfigFromDevice() method.")
+        print("   1: The device has some config stored in the non-volatile memory")
+        print("   and this config can be used by the loadConfigFromDevice() method,")
+        print("   or the loadFactoryConfig() method if the factory config not found in factory directory.")
     else:
-        print("   0: The device have a free non-volatile memory to saving config for future use.")
+        print("   0: The device has a free non-volatile memory to save config for future use.")
     print()
 
 print("defaultConfigFileName(): Returns default full path for device config file")
 print("  ", dev.defaultConfigFileName())
-print("   (See back to the configsDir() for details.)")
+print("   (See back to the ConfigsDirectory for details.)")
 print()
 print("---------------------------------")
 
@@ -109,31 +116,31 @@ print("---------------------------------")
 rc = dev.loadConfigFromDevice()
 print("dev.loadConfigFromDevice()", rc, "(0 is OK)")
 if rc==0: # 0 no errors
-    print("   The config was suscesfully loaded from the device internal NVM")
+    print("   The config was successfully loaded from the device internal NVM")
     print("   and can be used by the Pixet core.")
 else:
     print("   Error: The dev.loadConfigFromDevice() was failed!")
-    print("  ", dev.lastError())
+    print("   Last err message:", dev.lastError())
 print()
 # 2. Use the loadFactoryConfig()
 rc = dev.loadFactoryConfig()
 print("dev.loadFactoryConfig()", rc, "(0 is OK)")
 if rc==0: # 0 no errors
-    print("   The config was suscesfully loaded from the factory config file or from")
+    print("   The config was successfully loaded from the factory config file or from")
     print("   the device internal NVM and can be used by the Pixet core.")
 else:
     print("   Error: The dev.loadFactoryConfig() was failed!")
-    print("  ", dev.lastError())
+    print("   Last err message:", dev.lastError())
 print()
 # 3. Use the loadConfigFromFile(path)
 rc = dev.loadConfigFromFile("SomePath")
 print("dev.loadConfigFromFile(path)", rc, "(0 is OK)")
 if rc==0: # 0 no errors
-    print("   The config was suscesfully loaded from the file using the")
+    print("   The config was successfully loaded from the file using the")
     print("   loadConfigFromFile(path) method and can be used by the Pixet core.")
 else:
     print("   Error: The dev.loadConfigFromFile(path) was failed!")
-    print("  ", dev.lastError())
+    print("   Last err message:", dev.lastError())
 print()
 print("---------------------------------")
 
@@ -141,10 +148,10 @@ try:
     rc = dev.useCalibration(1)
     print("useCalibration(value)", rc, "(0 is OK)")
     if rc==0: # 0 no errors
-        print("   Calibration enable value was suscesfully set to", dev.isUsingCalibration())
+        print("   Calibration enable value was successfully set to", dev.isUsingCalibration())
     else:
         print("   Error: The dev.useCalibration(value) was failed!")
-        print("  ", dev.lastError())
+        print("   Last err message:", dev.lastError())
 except:
     print("This device have not the useCalibration(use) method")
     # Mpx3, for example
