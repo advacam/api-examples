@@ -1,7 +1,12 @@
 # pixet/device:
 # (c) 2026 Pavel hudecek, Advacam
 #
-# Example of basic using of the doSimpleAcquisition() and doSimpleIntegralAcquisition()
+# Example of basic using of
+# - doSimpleAcquisition() - measure frames to memory (and file(s))
+# - doSimpleIntegralAcquisition() - integrate frames to one and store it in memory (and file)
+#
+# doSimpleAcquisition(count, time, fileType, fileName)
+# doSimpleIntegralAcquisition(count, time, fileType, fileName)
 
 import sys, os
 
@@ -55,6 +60,7 @@ if rc==0:
     print("dev.acqFrameCount():", dev.acqFrameCount())
     print("Now are frames in memory, can be used later. Frames are stored to next acquisition start")
     print("See the subframes example to access it.")
+    print("For fully online processing can be registered the pixet.PX_EVENT_ACQ_FINISHED callback")
 
 print()
 print("doSimpleAcquisition...")
