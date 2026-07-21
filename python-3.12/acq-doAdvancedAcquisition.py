@@ -138,6 +138,7 @@ print("doAdvancedAcquisition() rc:", rc, "(0 is OK)" if rc==0 else f"errMsg:'{de
 if rc==0:
     print("Pixels were saved to file with default saving settings, see File saving flags for more options.")
     print("See https://wiki.advacam.cz/wiki/File_types#Timepix3_specific_data_files for more informations.")
+    print("See https://wiki.advacam.cz/wiki/Binary_core_API#Data-driven_special_settings for more data-driven settings.")
     print("(Data-driven saving cannot be combined with online processing from memory)")
 
 print()
