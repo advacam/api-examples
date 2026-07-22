@@ -13,7 +13,7 @@
 #
 # Tested on MiniPix Tpx3 CdTe
 
-import sys, os
+import sys, os, time, threading
 
 outPath = "test-files" # Output path for output saving.
 apiPath = "../../../API-nightly" # Path to API package or Pixet installed
@@ -22,48 +22,20 @@ os.environ["PATH"] = apiPath + ";" + os.environ["PATH"]
 # Alternatively use path to installed Pixet Pro, it cause sharing automatic configurations.
 # Or simply copy the script to Pixet or API directory and run it from there.
 
-import pypixet
-
-print("pixet core init...")
-pypixet.start()
-pixet=pypixet.pixet
-devices = pixet.devices()
-
-chipTypes = ["(unknown 0)", "MXR", "TPX", "MPX3", "TPX3", "TPX2", "MPX4", "TPX4"]
-print("Devices list (idx, device name, [chips list], chip type, material):")
-for n in range(len(devices)):
-    dev = devices[n]
-    print("  ", n, ":", dev.fullName(), dev.chipIDs(), chipTypes[dev.chipType()], dev.sensorType(0))
-
-if len(devices)==0 or devices[0].fullName()=="FileDevice 0":
-    print("  No devices connected")
-    print("Exit pixet...")
-    pypixet.exit()
-    exit()
-    
-print("---------------------------------")
-print("Device 0 selected")
-print()
-dev = devices[0]
-
-rc = dev.loadFactoryConfig()
-print("dev.loadFactoryConfig() rc:", rc, "(0 is OK)" if rc==0 else f"errMsg:'{dev.lastError()}'")
-
-
 def clbDevACQ_MEAS_STARTED(ev): # (ev.data) is meas. count. In this example is 0 (no finished frames).
     print("clb *** ACQ_MEAS_STARTED", ev.data)
 
 def clbDevACQ_FINISHED(ev): # (ev.data) is number of finished measurements.
     print("clb *** ACQ_FINISHED", ev.data)
-    print("  Frame", dev.lastAcqFrameRefInc())
+    print("  Frame", ev.obj.lastAcqFrameRefInc())
 
 def clbDevACQ_NEW_DATA(ev): # new data, (ev.data) is meas. index. In this example is always 0.
     print("clb *** ACQ_NEW_DATA", ev.data)
-    print("  Pixels count:", dev.lastAcqPixelsRefInc().totalPixelCount())
+    print("  Pixels count:", ev.obj.lastAcqPixelsRefInc().totalPixelCount())
 
 def clbDevACQ_FAILED(ev): # Acq failed (ev.data) is error code form the Pixet core.
     print("clb *** ACQ_FAILED", ev.data)
-    print("  ", dev.lastError())
+    print("  ", ev.obj.lastError())
     
 def callbackDEV_STATUS_CHANGED(ev): # Device status changed
     print("clb *** DEV_STATUS_CHANGED", ev.data) 
@@ -86,7 +58,7 @@ def clbDevACQ_ABORTED(ev):
 def clbDevACQ_SWTRG_READY(ev): # ready and waiting for software trigger
     print ("clb *** ACQ_SWTRG_READY", ev.data)
     # dev.doSoftwareTrigger(parameter reserved for future use)
-    print ("  doSoftwareTrigger (0=OK)", dev.doSoftwareTrigger(0))
+    print ("  doSoftwareTrigger (0=OK)", ev.obj.doSoftwareTrigger(0))
     
 def clbDevPX_EVENT_TPX3STG_CHANGED(ev): # settings of Timepix3 was changed (OPM etc)
     print ("clb *** PX_EVENT_TPX3STG_CHANGED", ev.data)
@@ -122,10 +94,6 @@ def clbDevPX_EVENT_BIAS_CHANGED(ev):
 def clbDevPX_DATAEVENT_BEFORE_SAVE(ev): # before every file saving 
     print ("clb *** PX_DATAEVENT_BEFORE_SAVE", ev.data)
 
-print("pixet core init...")
-pypixet.start()
-pixet=pypixet.pixet
-
 def regHandler(regarr, obj, name, callbackFn): # ----------------------------------------
     rc = obj.registerEvent(name, callbackFn)
     if rc>=0:
@@ -138,6 +106,48 @@ def regHandler(regarr, obj, name, callbackFn): # -------------------------------
         else:
             print("  Last err: (no msg available)")
 
+# Keyboard input with timeout, returns [True, input string] if key pressed or [False, ""] if timeout expired
+# Interesting problem to make timeouted waiting for a key press, work for all OS and without installing a library.
+def timeoutInput(prompt, timeout, pressMsg="", timeoutMsg=""): # ------------------------
+    print(prompt, flush=True)
+    result = [False, ""]
+
+    def inner():
+        result[0] = False
+        result[1] = input()
+        result[0] = True
+
+    thread = threading.Thread(target=inner)
+    # No direct terminate method for thread, must be daemon to be terminated at program end.
+    thread.daemon = True
+    thread.start()
+    for n in range(timeout):
+        if result[0]:
+            thread.join()
+            break
+        time.sleep(1)
+        print(".", end='', flush=True)
+    print()
+    print(pressMsg if result[0] else timeoutMsg)
+    return result
+
+def devsList(devices): # ----------------------------------------------------------------
+    chipTypes = ["(unknown 0)", "MXR", "TPX", "MPX3", "TPX3", "TPX2", "MPX4", "TPX4"]
+    print("devices[] (idx, device name, [chips list], chip type, material):")
+    for n in range(len(devices)):
+        dev = devices[n]
+        print("  ", n, ":", dev.fullName(), dev.chipIDs(), chipTypes[dev.chipType()], dev.sensorType(0))
+    if len(devices)==0 or devices[0].fullName()=="FileDevice 0":
+        print("  (No real devices in list)")
+
+
+print("Import pypixet...")
+import pypixet
+
+print("Pixet core init...")
+pypixet.start()
+pixet=pypixet.pixet
+
 regPix = []
 print("register Pixet Events...")
 # registerEvent(name, (reserved), CallFunc)
@@ -146,31 +156,40 @@ regHandler(regPix, pixet, pixet.PX_EVENT_DEVICE_REMOVED, clbPxPX_EVENT_DEVICE_RE
 regHandler(regPix, pixet, pixet.PX_EVENT_EXIT, clbPxPX_EVENT_EXIT)
 #regPix.append(pixet.registerEvent(pixet., clbPx))
 
-input("Insert new device and press enter")
-pixet.refreshDevices()
-input("Press enter")
+devices = pixet.devices()
+devsList(devices)
+print("---------------------------------")
 
-print("TPX3 devices:")
-devices = pixet.devicesByType(pixet.PX_DEVTYPE_TPX3)
-    
-devCnt = len(devices)
-if devCnt==0:
+if len(devices)>0 and devices[0].fullName()!="FileDevice 0":
+    dev = devices[0]
+    print("Device 0 selected")
+else:
+    print("No real devices found, please connect it in next step")
+
+timeoutInput(
+    "Insert new device and press any key (timeout 10 sec) or press a key to continue without new device",
+    10, "<key pressed>", "<Key timeout expired>"
+)
+
+print("pixet.refreshDevices...")
+rc = pixet.refreshDevices()
+print("pixet.refreshDevices rc:", rc, "(0 is OK)")
+print("---------------------------------")
+
+print("Try new devices list:")
+devices = pixet.devices()
+
+devsList(devices)
+print("---------------------------------")
+
+if len(devices)==0 or devices[0].fullName()=="FileDevice 0":
     print("  No devices connected")
-    pixet.exitPixet()
+    print("Exit pixet...")
+    pypixet.exit()
     exit()
 
-for n in range(devCnt):
-    dev = devices[n]
-    print("  ", n, dev.fullName(), dev.width(), dev.height(), dev.chipCount(), dev.chipIDs(), dev.sensorType(0))
-
-print("Selected device index: 0")
-pars = dev.parameters()
-print("CPU Temp:", pars.get("TemperatureCpu").getDouble(), end='')
-print(", Chip Temp:", pars.get("TemperatureChip").getDouble())
-print("FirmwareCpu:", pars.get("FirmwareCpu").getString())
-print("==================================================================")
-# get first Timepix3 device:
 dev = devices[0]
+print("Device 0 selected")
 
 regDev = []
 print("register device Events...")
@@ -210,7 +229,8 @@ print("mode set:", opm)
 # set Timepix3 operation mode: (src_gen\ipixetw.cpp)
 dev.setOperationMode(opm)
 
-print("doSensorRefresh start")        
+print("==================================================================")
+print("doSensorRefresh...")        
 rc = dev.doSensorRefresh()
 print("doSensorRefresh rc:", rc, "(0 is OK)" if rc==0 else f"errMsg:'{dev.lastError()}'")
 
@@ -251,25 +271,29 @@ print("doAdvancedAcquisition - data-driven - start")
 # in data-driven mode count must be >0, value is ignored
 rc = dev.doAdvancedAcquisition(1, testTime, pixet.PX_ACQTYPE_DATADRIVEN, pixet.PX_ACQMODE_NORMAL, pixet.PX_FTYPE_NONE, 0, "")
 print("doAdvancedAcquisition end", rc)
-print("Note: If no callbacks 'ACQ_NEW_DATA' occurred, must use longer time or particle source") 
+print("Note: If no callbacks 'ACQ_NEW_DATA' occurred or pixels count is 0, must use longer time or particle source")
 
-"""
+
 print()
 print("==================================================================")
 print()
+
+timeLimit = testTime * 13
 
 print("doContinuousAcquisition start")
 #dev.doContinuousAcquisition(BuffCount, time, mode)
 rc = dev.doContinuousAcquisition(5, testTime, pixet.PX_ACQMODE_CONTINUOUS)
 print("doContinuousAcquisition end", rc)
 
-input("Press Enter to quit doContinuousAcquisition")
+timeoutInput(
+    f"Press any key to abort continuous acquisition or wait for timeout {timeLimit} sec...",
+    timeLimit, "<key pressed>", "<Key timeout expired>"
+)
 
-print("\nWarning: continuous acquisition cannot be correctly stopped!")
-print("You may need to disconnect and reconnect the device before new use.\n")
+print("abortOperation...")
+rc = dev.abortOperation()
+print("dev.abortOperation rc:", rc, "(0 is OK)" if rc==0 else f"errMsg:'{dev.lastError()}'")
 
-exit()
-"""
 print()
 print("==================================================================")
 print()
@@ -294,7 +318,6 @@ if rc!=0:
     print("  Last err:", dev.lastError() if hasattr(dev, "lastError") else pixet.getLastError())
 
 print("pixet core exit...")
-
 
 print()
 print("---------------------------------")
