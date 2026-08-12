@@ -8,7 +8,10 @@ using namespace std;
 // (c) 2026 Pavel Hudecek, Advacam, https://advacam.cz, https://wiki.advacam.cz/wiki/Binary_core_API
 //
 // This example:
-// 1. 
+// 1. Load calibration to clustering engine
+// 2. Set - up the callbacks
+// 3. Start the measurement thru clustering engine
+// 4. Process measured data and online show preview of biggest and energiest clusters occured
 
 
 
@@ -35,7 +38,7 @@ using namespace std;
 #define TEST_fileClog "test.clog"
 #define TEST_fileClusters "test-outcl.txt"
 
-double measTime = 40000.0; // total measurement time [s]
+double measTime = 400.0; // total measurement time [s]
 int measToAcqDivider = 1;   // number of acquisitions per measurement (>1 can be for frame-based devices)
 unsigned ignoreYunder = 10; // ignore pixels with y < ignoreYunder
 
@@ -160,7 +163,7 @@ void clusterPreview(PXPClusterWithPixels* cluster, string pref, string comment) 
     cout << "\n" << pref << "==================================================================\n";
 	cout << "clusterPreview - end\n";
 }
-void clusterPreviewSave(PXPClusterWithPixels* cluster, string comment, ofstream* fout) {
+void clusterPreviewSave(PXPClusterWithPixels* cluster, string comment, ofstream* fout) { // 
 	cout << "clusterPreviewSave - start\n";
     (*fout) << clusterPreview(cluster, (string)"", comment, devWidth, devHeight);
     (*fout) << "pixels (position, time relative [ns], energy [keV]):\n";
@@ -285,13 +288,12 @@ int main() { // ================================================================
     errHandler(rc, "pxcGetDeviceDimensions");
     if (rc == 0) {
         devPixelsCount = devWidth * devHeight;
-    }
-    else {
+    } else {
         cout << "Cannot get device dimensions, trying using default 256x256.\n";
         devWidth = 256; devHeight = 256;
         devPixelsCount = devWidth * devHeight;
     }
-
+    cout << "\t" << devWidth << "x" << devHeight << " pxCnt:" << devPixelsCount << "\n";
 
 
     //rc = pxpClLoadPixetCore("pxcore.dll");
@@ -339,6 +341,8 @@ int main() { // ================================================================
 
     // offline alternative
     // pxpClLoadCalibrationFromFiles(clhandle_t handle, const char* filePaths);
+    //rc = pxpClLoadCalibrationFromFiles(clHandle, "configs/MiniPIX-D06-W0065.xml");
+    //errHandler(rc, "pxpClLoadCalibrationFromFiles");
 
     //pxpClSetMessageCallback(clhandle_t handle, ClMessageCallback callback, void* userData)
     rc = pxpClSetMessageCallback(clHandle, ClMessageCallbackFn, NULL);
