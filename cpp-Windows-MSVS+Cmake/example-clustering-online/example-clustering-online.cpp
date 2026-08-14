@@ -12,13 +12,13 @@ using namespace std;
 // 2. Set - up the callbacks
 // 3. Start the measurement thru clustering engine
 // 4. Process measured data and online show preview of biggest and energiest clusters occured
-
-
+// Default settings optimized for Minipix-Tpx3/CdTe 2mm vertical oriented to see cosmic muons,
+// for Si use some alpha or beta source, or high energy photons (0,5 MeV+) to produce secondary electrons in chip.
 
 // See example-basic.cpp about compilation and API package location considerations.
 #define PATH_TO_API ../x64/Debug
 //#define CHDIRS_toAPI_off
-//#define CHDIRS_back_off
+#define CHDIRS_back_off
 
 #ifdef PATH_TO_API
 #define STR2(x) #x
@@ -38,7 +38,7 @@ using namespace std;
 #define TEST_fileClog "test.clog"
 #define TEST_fileClusters "test-outcl.txt"
 
-double measTime = 400.0; // total measurement time [s]
+double measTime = 200.0;    // total measurement time [s]
 int measToAcqDivider = 1;   // number of acquisitions per measurement (>1 can be for frame-based devices)
 unsigned ignoreYunder = 10; // ignore pixels with y < ignoreYunder
 
@@ -100,7 +100,6 @@ PXPClusterWithPixels    highestCluster = { .energy = -1234, .size = 0, .height =
 
 // simple logaritmic test view ====================================================================
 string clusterPreview(PXPClusterWithPixels* cluster, string pref, string comment, unsigned frWid, unsigned frHei) {
-    cout << "clusterPreview str - start\n";
     ostringstream out;
     unsigned xdiv = frWid / 64;
     unsigned ydiv = frHei / 32;
@@ -114,15 +113,17 @@ string clusterPreview(PXPClusterWithPixels* cluster, string pref, string comment
         if (cluster->pixels[n].toa > toaMax) toaMax = cluster->pixels[n].toa;
     }
 
-    out << pref << comment << ":\n" << pref;
-    out.precision(3);
-    out << "ToA:" << cluster->toa << " (dt:" << (toaMax - toaMin) << ") ns, size:" << cluster->size << " px, height:" << cluster->height;
-    out << " keV, energy:" << cluster->energy / 1000.0 << " MeV\n";
+    out << pref << comment << ":\n";
     out << pref << "------------------------------------------------------------------\n";
 
-    string desc[10] = {
+    string desc[16] = {
         "E [keV]", "in block", "-------",
-        ". >0", "+ >4", "* >16", "o >64", "O >256", "8 >1024", "# >4096"
+        ". >0", "+ >4", "* >16", "o >64", "O >256", "8 >1024", "# >4096", "",
+        "ToA: " + format("{:.2e}", cluster->toa) + " ns",
+        "dt:  " + format("{:.2f}", toaMax - toaMin) + " ns",
+        "siz: " + to_string(cluster->size) + " px",
+        "hei: " + format("{:.2f}", cluster->height) + " keV",
+        "E:   " + format("{:.3f}", cluster->energy / 1000.0) + " MeV"
     };
     for (unsigned y = 0; y < 32; y++) {
         out << pref << "|";
@@ -145,14 +146,12 @@ string clusterPreview(PXPClusterWithPixels* cluster, string pref, string comment
             else if (val > 0)   out << ".";
             else                out << " ";
         }
-        out << "| " << (y < 10 ? desc[y] : "") << "\n";
+        out << "| " << (y < 16 ? desc[y] : "") << "\n";
     }
     out << pref << "------------------------------------------------------------------\n";
-	cout << "clusterPreview str - end\n";
     return out.str();
 }
 void clusterPreview(PXPClusterWithPixels* cluster, string pref, string comment) {
-	cout << "clusterPreview - start\n";
     cout << clusterPreview(cluster, pref, comment, devWidth, devHeight);
     cout << pref << "pixels (position, time relative [ns], energy [keV]):\n" << pref;
     for (unsigned n = 0; n < cluster->size; n++) {
@@ -161,10 +160,8 @@ void clusterPreview(PXPClusterWithPixels* cluster, string pref, string comment) 
         if (n % 3 == 2 && n < cluster->size - 1) cout << endl << pref;
     }
     cout << "\n" << pref << "==================================================================\n";
-	cout << "clusterPreview - end\n";
 }
 void clusterPreviewSave(PXPClusterWithPixels* cluster, string comment, ofstream* fout) { // 
-	cout << "clusterPreviewSave - start\n";
     (*fout) << clusterPreview(cluster, (string)"", comment, devWidth, devHeight);
     (*fout) << "pixels (position, time relative [ns], energy [keV]):\n";
     for (unsigned n = 0; n < cluster->size; n++) {
@@ -172,7 +169,6 @@ void clusterPreviewSave(PXPClusterWithPixels* cluster, string comment, ofstream*
         if (n % 4 == 3 && n < cluster->size - 1) (*fout) << endl;
     }
     (*fout) << "\n" << "==================================================================\n";
-	cout << "clusterPreviewSave - end\n";
 }
 
 unsigned testIgnoreClusterMaskCounter = 0;
@@ -293,11 +289,7 @@ int main() { // ================================================================
         devWidth = 256; devHeight = 256;
         devPixelsCount = devWidth * devHeight;
     }
-    cout << "\t" << devWidth << "x" << devHeight << " pxCnt:" << devPixelsCount << "\n";
-
-
-    //rc = pxpClLoadPixetCore("pxcore.dll");
-    //errHandler(rc, "pxpClLoadPixetCore");
+    cout << "  " << devWidth << "x" << devHeight << " pxCnt:" << devPixelsCount << "\n";
 
     rc = pxcLoadFactoryConfig(devIdx);
     errHandler(rc, "pxcLoadFactoryConfig");
@@ -307,7 +299,6 @@ int main() { // ================================================================
     }
 
     cout << "Warning: Measuring immediately after init may cause the first data contains power-on artefacts.\n";
-
     cout << "Dummy acq...\n";
     rc = pxcMeasureMultipleFrames(devIdx, 5, 1.0);
     errHandler(rc, "pxcMeasureMultipleFrames");
@@ -323,10 +314,6 @@ int main() { // ================================================================
     if (clHandle == CL_INVALID_HANDLE) cout << "pxpClCreate INVALID\n";
     else cout << "pxpClCreate OK\n";
 
-    //clHandle = pxpClCreate(0);
-    //if (clHandle == CL_INVALID_HANDLE) cout << "pxpClCreate INVALID\n";
-    //else cout << "pxpClCreate OK\n";
-
 #ifdef PATH_TO_API
 #ifndef CHDIRS_toAPI_off
 #ifndef CHDIRS_back_off
@@ -338,11 +325,13 @@ int main() { // ================================================================
 
     rc = pxpClLoadCalibrationFromDevice(clHandle);
     errHandler(rc, "pxpClLoadCalibrationFromDevice");
-
     // offline alternative
     // pxpClLoadCalibrationFromFiles(clhandle_t handle, const char* filePaths);
     //rc = pxpClLoadCalibrationFromFiles(clHandle, "configs/MiniPIX-D06-W0065.xml");
     //errHandler(rc, "pxpClLoadCalibrationFromFiles");
+	if (rc != 0) {
+		cout << "  Warning: pxpClLoadCalibrationFromDevice failed, the data will not be calibrated\n  ('energy' is not in keVs, it is raw ToT counter ticks)\n";
+	}
 
     //pxpClSetMessageCallback(clhandle_t handle, ClMessageCallback callback, void* userData)
     rc = pxpClSetMessageCallback(clHandle, ClMessageCallbackFn, NULL);
@@ -370,12 +359,6 @@ int main() { // ================================================================
     
     cout.precision(3);
 
-    /*cout << "Meas data for masking noisy pixels...\n";
-    rc = pxcMeasureTpx3DataDrivenMode(devIdx, 13.0, "");
-    errHandler(rc, "pxcMeasureTpx3DataDrivenMode");
-    //pxpClMaskNoisyPixels(clhandle_t handle);
-    rc = pxpClMaskNoisyPixels(clHandle);
-    errHandler(rc, "pxpClMaskNoisyPixels");*/
 
     //pxpClEnableFilteringOfNoisyPixels(clhandle_t handle, bool enable);
     rc = pxpClEnableFilteringOfNoisyPixels(clHandle, true);
@@ -424,10 +407,6 @@ int main() { // ================================================================
 #endif // !CHDIRS_back_off
 #endif // !CHDIRS_toAPI_off
 #endif // PATH_TO_API
-
-    //cout << "pxpClUnloadPixetCore...\n";
-    //pxpClUnloadPixetCore();
-    //cout << "pxpClUnloadPixetCore: done\n";
 
     cout << "pxcExit...\n";
     rc = pxcExit();

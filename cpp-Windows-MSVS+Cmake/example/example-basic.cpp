@@ -4,6 +4,8 @@ using namespace std;
 
 // (c) 2026 Pavel Hudecek, Advacam, https://advacam.cz, https://wiki.advacam.cz/wiki/Binary_core_API
 // This example simply measure some frames and save it to files.
+// Optimized for Timepix3. For othee use other operation modes settings. Data-driven meas only on Timepix3 and Timepix4.
+// Tested with Minipix-Tpx3.
 
 
 /* Example CMakeList.txt, if You want to use CMake: -------------------------------------
@@ -34,6 +36,9 @@ target_link_libraries(example pxcore)
 // - The pxcapi.h including common.h if it not in project directory, include it separatelly before the pxcapi.
 // - The pxcore.dll must be in directory with the executable, eq. "../x64/Debug" in both cases.
 //  Therefore, the easiest way is to copy the API package there so that it can be shared by all projects in the solution.
+
+#define CHDIRS_back_off // if defined, do not change back the working directory to original after pxcInitialize
+#define TEST_dir "test-files/"
 
 #ifdef PATH_TO_API
 #define STR2(x) #x
@@ -66,7 +71,7 @@ int main() { // ================================================================
 
 #ifdef PATH_TO_API
     auto cwdOrig = filesystem::current_path();
-    cout <<     "Original working directory:" << cwdOrig << "\n";
+    cout <<     "Original working directory:" << cwdOrig.string() << "\n";
     auto changeDirToAPI = [cwdOrig]() {
         try {
             filesystem::current_path(STR(PATH_TO_API));
@@ -74,7 +79,7 @@ int main() { // ================================================================
             cerr << "Error changing working directory to " << STR(PATH_TO_API) << ":\n" << e.what() << '\n';
             return -1;
         }
-        cout << "Changed WD to PATH_TO_API: " << filesystem::current_path() << "\n";
+        cout << "Changed WD to PATH_TO_API: " << filesystem::current_path().string() << "\n";
 		return 0;
     };
     if (auto chrc = changeDirToAPI() != 0) return chrc;
@@ -85,9 +90,14 @@ int main() { // ================================================================
     if (!errHandler(rc, "pxcInitialize")) return rc;
 
 #ifdef PATH_TO_API
-	filesystem::current_path(cwdOrig);
-	cout <<    "Returned WD to original:   " << filesystem::current_path() << "\n";
-#endif
+#ifndef CHDIRS_back_off
+    filesystem::current_path(cwdOrig);
+    cout << "Returned WD to original:   " << filesystem::current_path().string() << "\n";
+#else
+    cout << "See output files in:       " << filesystem::current_path().string() << "/" << TEST_dir << "\n";
+#endif // !CHDIRS_back_off
+#endif // PATH_TO_API
+
     int dcnt = pxcGetDevicesCount();
 	errHandler(dcnt, "pxcGetDevicesCount");
 	if (dcnt == 0) {
@@ -124,19 +134,20 @@ int main() { // ================================================================
 	errHandler(rc, "pxcMeasureMultipleFrames");
 
     // pxcSaveMeasuredFrame(deviceIndex, frameLastIndex, filename);
-    rc = pxcSaveMeasuredFrame(0, 0, "test-files/testImg0.png");
+    rc = pxcSaveMeasuredFrame(0, 0, TEST_dir "testImg0.png");
 	errHandler(rc, "pxcSaveMeasuredFrame 0");
-    rc = pxcSaveMeasuredFrame(0, 1, "test-files/testImg1.txt");
+    rc = pxcSaveMeasuredFrame(0, 1, TEST_dir "testImg1.txt");
     errHandler(rc, "pxcSaveMeasuredFrame 1");
-    rc = pxcSaveMeasuredFrame(0, 2, "test-files/testImg2.pbf");
+    rc = pxcSaveMeasuredFrame(0, 2, TEST_dir "testImg2.pbf");
     errHandler(rc, "pxcSaveMeasuredFrame 2");
 
     cout << "pxcMeasureTpx3DataDrivenMode...\n";
-	rc = pxcMeasureTpx3DataDrivenMode(0, 5, "test-files/testDataDriven.t3pa", PXC_TRG_NO);
+	rc = pxcMeasureTpx3DataDrivenMode(0, 5, TEST_dir "testDataDriven.t3pa", PXC_TRG_NO);
 	errHandler(rc, "pxcMeasureTpx3DataDrivenMode");
 
 #ifdef PATH_TO_API
     if (auto chrc = changeDirToAPI() != 0) return chrc;
+    // Here should be #ifndef CHDIRS_back_off... but the same chdir again, doesn't matter.
 #endif // PATH_TO_API
 
     cout << "pxcExit...\n";

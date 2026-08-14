@@ -85,7 +85,7 @@ int main() { // ================================================================
             cerr << "Error changing working directory to " << STR(PATH_TO_API) << ":\n" << e.what() << '\n';
             return -1;
         }
-        cout << "Changed WD to PATH_TO_API: " << filesystem::current_path() << "\n";
+        cout << "Changed WD to PATH_TO_API: " << filesystem::current_path().string() << "\n";
 		return 0;
     };
     if (auto chrc = changeDirToAPI() != 0) return chrc;
@@ -95,10 +95,6 @@ int main() { // ================================================================
     rc = pxcInitialize();
     if (!errHandler(rc, "pxcInitialize")) return rc;
 
-#ifdef PATH_TO_API
-	filesystem::current_path(cwdOrig);
-	cout <<    "Returned WD to original:   " << filesystem::current_path() << "\n";
-#endif
     int dcnt = pxcGetDevicesCount();
 	errHandler(dcnt, "pxcGetDevicesCount");
 	if (dcnt == 0) {
@@ -201,10 +197,6 @@ int main() { // ================================================================
         54321
     );
 	errHandler(rc, "pxcMeasureTpx3DataDrivenMode");
-
-#ifdef PATH_TO_API
-    if (auto chrc = changeDirToAPI() != 0) return chrc;
-#endif // PATH_TO_API
 
     cout << "pxcExit...\n";
     rc = pxcExit();

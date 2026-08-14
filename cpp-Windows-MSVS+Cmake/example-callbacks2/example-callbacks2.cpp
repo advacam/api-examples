@@ -143,10 +143,6 @@ int main() { // ================================================================
     rc = pxcInitialize();
     if (!errHandler(rc, "pxcInitialize")) return rc;
 
-#ifdef PATH_TO_API
-	filesystem::current_path(cwdOrig);
-	cout <<    "Returned WD to original:   " << filesystem::current_path() << "\n";
-#endif
     int dcnt = pxcGetDevicesCount();
 	errHandler(dcnt, "pxcGetDevicesCount");
 	if (dcnt == 0) {
@@ -206,10 +202,6 @@ int main() { // ================================================================
     // pxcMeasureTpx3DataDrivenMode(unsigned deviceIndex, double measTime, const char* fileName, unsigned trgStg = PXC_TRG_NO, AcqEventFunc callback = 0, intptr_t userData = 0);
 	rc = pxcMeasureTpx3DataDrivenMode(devIdx, 20, "", PXC_TRG_NO, clbAcqEventFunc, (intptr_t)&devName);
 	errHandler(rc, "pxcMeasureTpx3DataDrivenMode");
-
-#ifdef PATH_TO_API
-    if (auto chrc = changeDirToAPI() != 0) return chrc;
-#endif // PATH_TO_API
 
     cout << "pxcExit...\n";
     rc = pxcExit();

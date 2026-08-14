@@ -113,10 +113,6 @@ int main() { // ================================================================
     rc = pxcInitialize();
     if (!errHandler(rc, "pxcInitialize")) return rc;
 
-#ifdef PATH_TO_API
-	filesystem::current_path(cwdOrig);
-	cout <<    "Returned WD to original:   " << filesystem::current_path() << "\n";
-#endif
     int dcnt = pxcGetDevicesCount();
 	errHandler(dcnt, "pxcGetDevicesCount");
 	if (dcnt == 0) {
@@ -197,10 +193,6 @@ int main() { // ================================================================
 
 	rc = pxcSetDeviceParameterDouble(devIdx, "DDEventMinRepTime", 0.5); // restore default value (need only if configs shared with Pixet GUI)
     errHandler(rc, "pxcSetDeviceParameterDouble DDEventMinRepTime restore default");
-
-#ifdef PATH_TO_API
-    if (auto chrc = changeDirToAPI() != 0) return chrc;
-#endif // PATH_TO_API
 
     cout << "pxcExit...\n";
     rc = pxcExit();

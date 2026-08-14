@@ -42,6 +42,9 @@ target_link_libraries(example-calib pxcore)
 // - The pxcore.dll must be in directory with the executable, eq. "../x64/Debug" in both cases.
 //  Therefore, the easiest way is to copy the API package there so that it can be shared by all projects in the solution.
 
+#define CHDIRS_back_off // if defined, do not change back the working directory to original after pxcInitialize
+#define TEST_dir "test-files/"
+
 #ifdef PATH_TO_API
 #define STR2(x) #x
 #define STR(x) STR2(x)
@@ -189,7 +192,7 @@ int main() { // ================================================================
             cerr << "Error changing working directory to " << STR(PATH_TO_API) << ":\n" << e.what() << '\n';
             return -1;
         }
-        cout << "Changed WD to PATH_TO_API: " << filesystem::current_path() << "\n";
+        cout << "Changed WD to PATH_TO_API: " << filesystem::current_path().string() << "\n";
 		return 0;
     };
     if (auto chrc = changeDirToAPI() != 0) return chrc;
@@ -200,9 +203,14 @@ int main() { // ================================================================
     if (!errHandler(rc, "pxcInitialize")) return rc;
 
 #ifdef PATH_TO_API
-	filesystem::current_path(cwdOrig);
-	cout <<    "Returned WD to original:   " << filesystem::current_path() << "\n";
-#endif
+#ifndef CHDIRS_back_off
+    filesystem::current_path(cwdOrig);
+    cout << "Returned WD to original:   " << filesystem::current_path().string() << "\n";
+#else
+    cout << "See output files in:       " << filesystem::current_path().string() << "/" << TEST_dir << "\n";
+#endif // !CHDIRS_back_off
+#endif // PATH_TO_API
+
     int dcnt = pxcGetDevicesCount();
 	errHandler(dcnt, "pxcGetDevicesCount");
 	if (dcnt == 0) {
@@ -264,7 +272,7 @@ int main() { // ================================================================
 			rc = pxcMeasureMultipleFrames(devIdx, 3, 1.0, PXC_TRG_NO);
             errHandler(rc, "pxcMeasureMultipleFrames");
             //pxcSaveMeasuredFrame(deviceIndex, frameIndex, filename);
-            rc = pxcSaveMeasuredFrame(0, 1, "test-files/testImg-nocal.txt");
+            rc = pxcSaveMeasuredFrame(0, 1, TEST_dir "testImg-nocal.txt");
             errHandler(rc, "pxcSaveMeasuredFrame nc");
 
             cout << "pxcMeasureSingleFrameTpx3...\n";
@@ -284,7 +292,7 @@ int main() { // ================================================================
             rc = pxcMeasureMultipleFrames(devIdx, 3, 1.0, PXC_TRG_NO);
             errHandler(rc, "pxcMeasureMultipleFrames");
             //pxcSaveMeasuredFrame(deviceIndex, frameIndex, filename);
-            rc = pxcSaveMeasuredFrame(0, 1, "test-files/testImg-cal.txt");
+            rc = pxcSaveMeasuredFrame(0, 1, TEST_dir "testImg-cal.txt");
             errHandler(rc, "pxcSaveMeasuredFrame cal");
 
             size = devPixelsCount;
@@ -314,7 +322,7 @@ int main() { // ================================================================
             rc = pxcMeasureMultipleFrames(devIdx, 3, 1.0, PXC_TRG_NO);
             errHandler(rc, "pxcMeasureMultipleFrames");
             //pxcSaveMeasuredFrame(deviceIndex, frameIndex, filename);
-            rc = pxcSaveMeasuredFrame(0, 1, "test-files/testImg-nocal.txt");
+            rc = pxcSaveMeasuredFrame(0, 1, TEST_dir "testImg-nocal.txt");
             errHandler(rc, "pxcSaveMeasuredFrame nc");
 
             cout << "pxcMeasureSingleFrameTpx2...\n";
@@ -331,7 +339,7 @@ int main() { // ================================================================
             rc = pxcMeasureMultipleFrames(devIdx, 3, 1.0, PXC_TRG_NO);
             errHandler(rc, "pxcMeasureMultipleFrames");
             //pxcSaveMeasuredFrame(deviceIndex, frameIndex, filename);
-            rc = pxcSaveMeasuredFrame(0, 1, "test-files/testImg-cal.txt");
+            rc = pxcSaveMeasuredFrame(0, 1, TEST_dir "testImg-cal.txt");
             errHandler(rc, "pxcSaveMeasuredFrame cal");
 
             size = devPixelsCount;
@@ -356,7 +364,7 @@ int main() { // ================================================================
             rc = pxcMeasureMultipleFrames(devIdx, 3, 1.0, PXC_TRG_NO);
             errHandler(rc, "pxcMeasureMultipleFrames");
             //pxcSaveMeasuredFrame(deviceIndex, frameIndex, filename);
-            rc = pxcSaveMeasuredFrame(0, 1, "test-files/testImg-nocal.txt");
+            rc = pxcSaveMeasuredFrame(0, 1, TEST_dir "testImg-nocal.txt");
             errHandler(rc, "pxcSaveMeasuredFrame nc");
 
 			cout << "pxcMeasureSingleFrame (Tpx)...\n";
@@ -373,7 +381,7 @@ int main() { // ================================================================
             rc = pxcMeasureMultipleFrames(devIdx, 3, 1.0, PXC_TRG_NO);
             errHandler(rc, "pxcMeasureMultipleFrames");
             //pxcSaveMeasuredFrame(deviceIndex, frameIndex, filename);
-            rc = pxcSaveMeasuredFrame(0, 1, "test-files/testImg-cal.txt");
+            rc = pxcSaveMeasuredFrame(0, 1, TEST_dir "testImg-cal.txt");
             errHandler(rc, "pxcSaveMeasuredFrame cal");
 
 			cout << "pxcMeasureSingleCalibratedFrame (Tpx) is not implemented at this time\n";
@@ -404,10 +412,9 @@ int main() { // ================================================================
     rc = pxcSetTimepix3CalibrationEnabled(devIdx, true);
     errHandler(rc, "pxcSetTimepix3CalibrationEnabled-1");
 
-
-
 #ifdef PATH_TO_API
     if (auto chrc = changeDirToAPI() != 0) return chrc;
+    // Here should be #ifndef CHDIRS_back_off... but the same chdir again, doesn't matter.
 #endif // PATH_TO_API
 
     cout << "pxcExit...\n";
