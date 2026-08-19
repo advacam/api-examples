@@ -130,7 +130,7 @@ int main() { // ================================================================
 	cout << "pxcMeasureMultipleFrames...\n";
 
     // pxcMeasureMultipleFrames(deviceIndex, frameCount, acqTime, triggerSettings);
-    rc = pxcMeasureMultipleFrames(0, 3, 1, PXC_TRG_NO);
+    rc = pxcMeasureMultipleFrames(0, 5, 1, PXC_TRG_NO);
 	errHandler(rc, "pxcMeasureMultipleFrames");
 
     // pxcSaveMeasuredFrame(deviceIndex, frameLastIndex, filename);
@@ -140,6 +140,15 @@ int main() { // ================================================================
     errHandler(rc, "pxcSaveMeasuredFrame 1");
     rc = pxcSaveMeasuredFrame(0, 2, TEST_dir "testImg2.pbf");
     errHandler(rc, "pxcSaveMeasuredFrame 2");
+    /* // need hdf5io library and item of [Plugins] in the pixet.ini
+    rc = pxcSaveMeasuredFrame(0, 3, TEST_dir "testImg3.h5");
+    errHandler(rc, "pxcSaveMeasuredFrame 3");
+    // need hdf5io library and item of [Plugins] in the pixet.ini
+    rc = pxcSaveMeasuredFrame(0, 4, TEST_dir "testImg4.tiff");
+    errHandler(rc, "pxcSaveMeasuredFrame 4");
+    [Plugins]
+    Plugin=hdf5io.dll
+    Plugin=tiffio.dll */
 
     cout << "pxcMeasureTpx3DataDrivenMode...\n";
 	rc = pxcMeasureTpx3DataDrivenMode(0, 5, TEST_dir "testDataDriven.t3pa", PXC_TRG_NO);

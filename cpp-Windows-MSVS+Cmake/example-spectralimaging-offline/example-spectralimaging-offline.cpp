@@ -8,6 +8,7 @@
 using namespace std;
 
 // (c) 2026 Pavel Hudecek, Advacam, https://advacam.cz, https://wiki.advacam.cz/wiki/Binary_core_API
+//                                  https://wiki.advacam.cz/wiki/Binary_Spectral_Imaging_API
 //
 // Spectral imaging example - without device. This example has variants by measMode values r/b:
 // 1.r: replay t3pa data file,
@@ -147,7 +148,7 @@ string framePreview(double* frame, string pref, string comment, unsigned frWid, 
     return out.str();
 }
 
-// 1. Load the Pixet core
+// 1. Load Pixet core without try starting devices
 // 2. Create the Spectral imaging handle
 // 3. Load calibration to the Spectral imaging
 // 4. Set the callbacks
@@ -160,16 +161,15 @@ int main() { // ################################################################
 #ifdef PATH_TO_API
 #ifndef CHDIRS_toAPI_off
     auto cwdOrig = filesystem::current_path();
-    cout << "Original working directory:" << cwdOrig << "\n";
+    cout << "Original working directory:" << cwdOrig.string() << "\n";
     auto changeDirToAPI = [cwdOrig]() {
         try {
             filesystem::current_path(STR(PATH_TO_API));
-        }
-        catch (const filesystem::filesystem_error& e) {
+        } catch (const filesystem::filesystem_error& e) {
             cerr << "Error changing working directory to " << STR(PATH_TO_API) << ":\n" << e.what() << '\n';
             return -1;
         }
-        cout << "Changed WD to PATH_TO_API: " << filesystem::current_path() << "\n";
+        cout << "Changed WD to PATH_TO_API: " << filesystem::current_path().string() << "\n";
         return 0;
     };
     if (auto chrc = changeDirToAPI() != 0) return chrc;
@@ -189,7 +189,7 @@ int main() { // ################################################################
 #ifndef CHDIRS_toAPI_off
 #ifndef CHDIRS_back_off
     filesystem::current_path(cwdOrig);
-    cout << "Returned WD to original:   " << filesystem::current_path() << "\n";
+    cout << "Returned WD to original:   " << filesystem::current_path().string() << "\n";
 #endif // !CHDIRS_back_off
 #endif // !CHDIRS_toAPI_off
 #endif // PATH_TO_API
@@ -232,7 +232,16 @@ int main() { // ################################################################
         break;
     default:
         cout << "Unknown measMode value '" << measMode << "', use 'r' or 'b'\n";
-        break;
+#ifdef PATH_TO_API
+#ifndef CHDIRS_toAPI_off
+        if (auto chrc = changeDirToAPI() != 0) return chrc;
+#endif // !CHDIRS_toAPI_off
+#endif // PATH_TO_API
+
+        cout << "pxpSiUnloadPixetCore...\n";
+        pxpSiUnloadPixetCore();
+        cout << "pxpSiUnloadPixetCore: end\n";
+        return -123;
     }
 
     cout << "===============================================================================\n";

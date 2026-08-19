@@ -3,19 +3,18 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>  
+#include <format>
 using namespace std;
 
 // (c) 2026 Pavel Hudecek, Advacam, https://advacam.cz, https://wiki.advacam.cz/wiki/Binary_core_API
 //                                  https://wiki.advacam.cz/wiki/Binary_Clustering_API
+//
 // This example:
-// 1. Load calibration to clustering engine
-// 2. Set - up the callbacks
-// 3. Start the measurement thru clustering engine
-// 4. Process measured data and online show preview of biggest and energiest clusters occured
-// 
-// Default settings optimized for Minipix-Tpx3/CdTe 2mm vertical oriented to see cosmic muons,
-// for Si use some alpha or beta source, mixed source like as uranium ore/uranium glass,
-// or high energy photons (0,5 MeV+) to produce secondary electrons in chip.
+// 1. Load Pixet core without try starting devices
+// 2. Init clustering engine
+// 3. Set-up the callbacks
+// 4. Process measured data from file to clusters
+// 5. Filter clusters in callback and show preview of biggest and energiest clusters occured
 
 // See example-basic.cpp about compilation and API package location considerations.
 #define PATH_TO_API ../x64/Debug
@@ -35,17 +34,18 @@ using namespace std;
 #include "clusteringapi.h"
 #endif // PATH_TO_API
 
-#define TEST_dir "test-files/"              // test files directory
-#define TEST_fileClog "test.clog"           // clustering output file (optional) CLOG only
-#define TEST_fileClusters "test-outcl.txt"  // test preview output file (optional) with clusters full data
+#define TEST_dir "test-files/"                          // test files directory
+#define TEST_fileT3pa "test.t3pa"                       // clustering input file T3PA, T3P, CLOG, PMF, H5, TXT
+#define TEST_fileClog "test.clog"                       // clustering output file (optional) CLOG only
+#define TEST_fileClusters "test-outcl.txt"              // test preview output file (optional) with clusters full data
+#define TEST_pathConfig "configs\\MiniPIX-D05-W0037.xml"// input data source device config/calibration file (optional) XML or A,B,C,T files
 
-double measTime = 200.0;    // total measurement time [s]
-int measToAcqDivider = 1;   // number of acquisitions per measurement (>1 can be for frame-based devices)
-unsigned ignoreYunder = 10; // ignore pixels with y < ignoreYunder
+unsigned ignoreYunder = 10;                             // ignore pixels with y < ignoreYunder
+uint32_t devWidth=256, devHeight=256;                   // input data device width and height
+
 
 ofstream clustersMaxsFout;
 clhandle_t clHandle = nullptr;
-void* iPixet = nullptr;
 
 bool errHandler(int rc, const char* funcName, bool silent = false) { // ===========================
     if (silent && rc == 0) return true; // if silent and OK, do not print anything
@@ -62,10 +62,6 @@ bool errHandler(int rc, const char* funcName, bool silent = false) { // ========
     return rc >= 0;
 }
 
-unsigned devIdx = 0;
-uint32_t devWidth, devHeight;
-uint32_t devPixelsCount = 0;
-
 // message callback in the Windows CLR app
 void ClMessageCallbackFn(bool error, const char* message, void* userData) { // ====================
     cout << "clb Msg: err:" << (int)error << ", msg:'" << message << "'\n";
@@ -77,8 +73,8 @@ void ClProgressCallbackFn(bool finished, double progress, void* userData) { // =
 }
 
 float maxClEglob = 0.0, maxClHglob = 0.0;
-unsigned short maxClsizGlob = 0;
-void ClNewClustersCallbackFn(PXPCluster* clusters, size_t clusterCount, size_t acqIndex, void* userData) { // ====
+unsigned short maxClsizGlob = 0; // ===============================================================
+void ClNewClustersCallbackFn(PXPCluster* clusters, size_t clusterCount, size_t acqIndex, void* userData) { 
     cout << "clb New Cl: clusterCount " << clusterCount << ", acqIndex " << acqIndex << "\n";
 
     float maxClE = 0.0, maxClH = 0.0;
@@ -94,7 +90,7 @@ void ClNewClustersCallbackFn(PXPCluster* clusters, size_t clusterCount, size_t a
     cout << "^ max single cluster size " << maxClsiz << " px, max energy " << maxClE / 1000.0 << " MeV, max height " << maxClH / 1000.0 << " MeV\n";
 }
 
-const size_t cMaxStoredPixels = 2500;
+const size_t cMaxStoredPixels = 15000;
 PXPClusterWithPixels    biggestCluster = { .energy = -1234, .size = 0, .height = -1234, .pixels = new PXPPixel[cMaxStoredPixels] };
 PXPClusterWithPixels    energiestCluster = { .energy = -1234, .size = 0, .height = -1234, .pixels = new PXPPixel[cMaxStoredPixels] };
 PXPClusterWithPixels    highestCluster = { .energy = -1234, .size = 0, .height = -1234, .pixels = new PXPPixel[cMaxStoredPixels] };
@@ -119,12 +115,12 @@ string clusterPreview(PXPClusterWithPixels* cluster, string pref, string comment
 
     string desc[16] = {
         "E [keV]", "in block", "-------",
-        ". >0", "+ >4", "* >16", "o >64", "O >256", "8 >1024", "# >4096", "",
+		". >0", "+ >4", "* >16", "o >64", "O >256", "8 >1024", "# >4096", "", 
         "ToA: " + format("{:.2e}", cluster->toa) + " ns",
         "dt:  " + format("{:.2f}", toaMax - toaMin) + " ns",
-        "siz: " + to_string(cluster->size) + " px",
+        "siz: " + to_string(cluster->size) + " px", 
         "hei: " + format("{:.2f}", cluster->height) + " keV",
-        "E:   " + format("{:.3f}", cluster->energy / 1000.0) + " MeV"
+        "E:   " + format("{:.3f}", cluster->energy/1000.0) + " MeV"
     };
     for (unsigned y = 0; y < 32; y++) {
         out << pref << "|";
@@ -163,7 +159,7 @@ void clusterPreview(PXPClusterWithPixels* cluster, string pref, string comment) 
     cout << "\n" << pref << "==================================================================\n";
 }
 void clusterPreviewSave(PXPClusterWithPixels* cluster, string comment, ofstream* fout) {
-    if (!fout->is_open()) return;
+	if (!fout->is_open()) return;
     fout->precision(3);
     (*fout) << clusterPreview(cluster, (string)"", comment, devWidth, devHeight);
     (*fout) << "pixels (position, time relative [ns], energy [keV]):\n";
@@ -238,7 +234,12 @@ void ClNewClustersWithPixelsCallbackFn(PXPClusterWithPixels* clusters, size_t cl
     cout << "ClNewClustersWithPixelsCallbackFn - end\n";
 }
 
-int main() { // ===================================================================================
+// 1. Load the Pixet core without try starting any devices
+// 2. Create the Clustering handle
+// 3. Load calibration to the Clustering
+// 4. Set the callbacks
+// 5. Do the experiment
+int main() { // ###################################################################################
     int rc; // return code
 
     cout << "PXCAPI example - for details see https://wiki.advacam.cz/wiki/Binary_Clustering_API\n\n";
@@ -261,58 +262,11 @@ int main() { // ================================================================
 #endif // !CHDIRS_toAPI_off
 #endif // PATH_TO_API
 
-    cout << "pxcInitialize...\n";
-    rc = pxcInitialize();
-    if (!errHandler(rc, "pxcInitialize")) return rc;
+    cout << "pxpClLoadPixetCore...\n";
+    rc = pxpClLoadPixetCore("pxcore.dll");
+    errHandler(rc, "pxpClLoadPixetCore");
 
-    int dcnt = pxcGetDevicesCount();
-    errHandler(dcnt, "pxcGetDevicesCount");
-    if (dcnt == 0) {
-        cout << "No devices found, exiting...\n";
-        rc = pxcExit();
-        cout << "pxcExit: " << rc << " (0 is OK)\n";
-        return 0;
-    }
-    for (int n = 0; n < dcnt; n++) {
-        char name[100];
-        rc = pxcGetDeviceName(n, name, 100);
-        errHandler(rc, "  pxcGetDeviceName", true);
-        cout << "  Dev " << n << ": name:'" << name << "'\n";
-    }
-    devIdx = 0;
-    cout << "Using dev:" << devIdx << "\n";
-
-    rc = pxcGetDeviceDimensions(devIdx, &devWidth, &devHeight);
-    errHandler(rc, "pxcGetDeviceDimensions");
-    if (rc == 0) {
-        devPixelsCount = devWidth * devHeight;
-    } else {
-        cout << "Cannot get device dimensions, trying using default 256x256.\n";
-        devWidth = 256; devHeight = 256;
-        devPixelsCount = devWidth * devHeight;
-    }
-    cout << "  " << devWidth << "x" << devHeight << " pxCnt:" << devPixelsCount << "\n";
-
-    rc = pxcLoadFactoryConfig(devIdx);
-    errHandler(rc, "pxcLoadFactoryConfig");
-    if (rc == -1027) {
-        cout << "Create the 'factory' subdir and copy the factory config files there.\n";
-        cout << "Or set the FactoryDir= in the [settings] section of the pixet.ini file\n";
-    }
-
-    cout << "Warning: Measuring immediately after init may cause the first data contains power-on artefacts.\n";
-    cout << "Dummy acq...\n";
-    rc = pxcMeasureMultipleFrames(devIdx, 5, 1.0);
-    errHandler(rc, "pxcMeasureMultipleFrames");
-
-    // Warning: Use the pxcGetIPixet from pxcapi.h, not pxpClGetIPixet from clusteringapi.h
-    iPixet = pxcGetIPixet();
-    if (iPixet == nullptr) cerr << "pxcGetIPixet returned nullptr\n";
-    else cout << "pxcGetIPixet OK\n";
-
-    pxpClSetIPixet(iPixet);
-
-    clHandle = pxpClCreate(devIdx);
+    clHandle = pxpClCreate(0);
     if (clHandle == CL_INVALID_HANDLE) cout << "pxpClCreate INVALID\n";
     else cout << "pxpClCreate OK\n";
 
@@ -324,16 +278,9 @@ int main() { // ================================================================
 #endif // !CHDIRS_back_off
 #endif // !CHDIRS_toAPI_off
 #endif // PATH_TO_API
-
-    rc = pxpClLoadCalibrationFromDevice(clHandle);
-    errHandler(rc, "pxpClLoadCalibrationFromDevice");
-    // offline alternative
     // pxpClLoadCalibrationFromFiles(clhandle_t handle, const char* filePaths);
-    //rc = pxpClLoadCalibrationFromFiles(clHandle, "configs/MiniPIX-D06-W0065.xml");
-    //errHandler(rc, "pxpClLoadCalibrationFromFiles");
-	if (rc != 0) {
-		cout << "  Warning: pxpClLoadCalibrationFromDevice failed, the data will not be calibrated\n  ('energy' is not in keVs, it is raw ToT counter ticks)\n";
-	}
+    rc = pxpClLoadCalibrationFromFiles(clHandle, TEST_pathConfig);
+    errHandler(rc, "pxpClLoadCalibrationFromFiles");
 
     //pxpClSetMessageCallback(clhandle_t handle, ClMessageCallback callback, void* userData)
     rc = pxpClSetMessageCallback(clHandle, ClMessageCallbackFn, NULL);
@@ -343,36 +290,36 @@ int main() { // ================================================================
     rc = pxpClSetProgressCallback(clHandle, ClProgressCallbackFn, NULL);
     errHandler(rc, "pxpClSetProgressCallback");
 
-    // arriving data containing properties of the clusters with all their pixels
+    // arriving with data containing properties of the clusters with all their pixels
     rc = pxpClSetNewClustersWithPixelsCallback(clHandle, ClNewClustersWithPixelsCallbackFn, NULL);
     errHandler(rc, "pxpClSetNewClustersWithPixelsCallback");
 
-    // arriving data containing properties of the clusters with parameters only, no pixel data
+    // arriving with data containing properties of the clusters with parameters only, no pixel data
     //rc = pxpClSetNewClustersCallback(clHandle, ClNewClustersCallbackFn, NULL);
     //errHandler(rc, "pxpClSetNewClustersCallback");
 
     // note: If registered both clusters callbacks, only second one will be called.
-    
+
     string fName = (string)TEST_dir TEST_fileClusters;
+    clustersMaxsFout.open(fName, ios::out);
     if (clustersMaxsFout.is_open()) {
         cout << "Opened file '" << fName << "' for cluster preview output.\n";
         cout << "Stream state: good:" << clustersMaxsFout.good() << ", fail:" << clustersMaxsFout.fail() << ", bad:" << clustersMaxsFout.bad() << "\n";
-    } else {
-        cout << "Failed to open file '" << fName << "' for cluster preview output. - View only.\n";
-    }
+	} else {
+		cout << "Failed to open file '" << fName << "' for cluster preview output. - View only.\n";
+	}
 
     cout.precision(3);
 
-    // use if there is a high data-rate and clustering is slow due to noisy pixels
+    // use if there is a lot of data and clustering is slow due to noisy pixels
     //pxpClEnableFilteringOfNoisyPixels(clhandle_t handle, bool enable);
-    rc = pxpClEnableFilteringOfNoisyPixels(clHandle, true);
-    errHandler(rc, "pxpClEnableFilteringOfNoisyPixels");
+    //rc = pxpClEnableFilteringOfNoisyPixels(clHandle, true);
+    //errHandler(rc, "pxpClEnableFilteringOfNoisyPixels");
 
-    cout << "Start measuring with online clustering for " << measTime << " seconds...\n";
-    //pxpClStartMeasurement(clhandle_t handle, double acqTime, double measTime, const char* outputFilePath);
-    rc = pxpClStartMeasurement(clHandle, measTime / measToAcqDivider, measTime, (TEST_dir TEST_fileClog));
-    errHandler(rc, "pxpClStartMeasurement");
-
+	cout << "Start replaying data file '" << (TEST_dir TEST_fileT3pa) << "' ...\n";
+    //pxpClReplayData(clhandle_t handle, const char* filePath, const char* outputFilePath, bool blocking);
+    rc = pxpClReplayData(clHandle, (TEST_dir TEST_fileT3pa), (TEST_dir TEST_fileClog), false);
+	errHandler(rc, "pxpClReplayData");
 
     cout << "===============================================================================\n";
     while (pxpClIsRunning(clHandle) > 0) {
@@ -383,7 +330,7 @@ int main() { // ================================================================
             errHandler(rc, "pxpClAbort");
             while (pxpClIsRunning(clHandle) > 0) Sleep(100);
         } // note: Placing it in a progress callback looks more elegant, but aborting called from callbacks takes multiple longer.
-        
+
     }
     cout << "===============================================================================\n";
     if (clustersMaxsFout.is_open()) {
@@ -405,6 +352,7 @@ int main() { // ================================================================
     cout << "testIgnoreClusterMaskCounter:" << testIgnoreClusterMaskCounter << endl;
     cout << "lastClusterToa:" << lastClusterToa << " ns\nlastClusterAcqIndex:" << lastClusterAcqIndex << endl;
 
+
 #ifdef PATH_TO_API
 #ifndef CHDIRS_toAPI_off
 #ifndef CHDIRS_back_off
@@ -413,7 +361,7 @@ int main() { // ================================================================
 #endif // !CHDIRS_toAPI_off
 #endif // PATH_TO_API
 
-    cout << "pxcExit...\n";
-    rc = pxcExit();
-    cout << "pxcExit: " << rc << " (0 is OK)\n";
+    cout << "pxpClUnloadPixetCore...\n";
+    pxpClUnloadPixetCore();
+    cout << "pxpClUnloadPixetCore: done\n";
 }

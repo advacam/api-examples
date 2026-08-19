@@ -8,6 +8,7 @@
 using namespace std;
 
 // (c) 2026 Pavel Hudecek, Advacam, https://advacam.cz, https://wiki.advacam.cz/wiki/Binary_core_API
+//                                  https://wiki.advacam.cz/wiki/Binary_Spectral_Imaging_API
 //
 // Spectral imaging: Measure data -> convert to clusters -> sort by energy -> place clusters centers as pixels to image with energy filtering
 // 
@@ -173,7 +174,7 @@ int main() { // ################################################################
 #ifdef PATH_TO_API
 #ifndef CHDIRS_toAPI_off
     auto cwdOrig = filesystem::current_path();
-    cout << "Original working directory:" << cwdOrig << "\n";
+    cout << "Original working directory:" << cwdOrig.string() << "\n";
     auto changeDirToAPI = [cwdOrig]() {
         try {
             filesystem::current_path(STR(PATH_TO_API));
@@ -181,7 +182,7 @@ int main() { // ################################################################
             cerr << "Error changing working directory to " << STR(PATH_TO_API) << ":\n" << e.what() << '\n';
             return -1;
         }
-        cout << "Changed WD to PATH_TO_API: " << filesystem::current_path() << "\n";
+        cout << "Changed WD to PATH_TO_API: " << filesystem::current_path().string() << "\n";
         return 0;
     };
     if (auto chrc = changeDirToAPI() != 0) return chrc;
@@ -276,7 +277,7 @@ int main() { // ################################################################
 #ifndef CHDIRS_toAPI_off
 #ifndef CHDIRS_back_off
     filesystem::current_path(cwdOrig);
-    cout << "Returned WD to original:   " << filesystem::current_path() << "\n";
+    cout << "Returned WD to original:   " << filesystem::current_path().string() << "\n";
 #endif // !CHDIRS_back_off
 #endif // !CHDIRS_toAPI_off
 #endif // PATH_TO_API
@@ -327,7 +328,16 @@ int main() { // ################################################################
             break;
         default:
             cout << "Unknown measMode value '" << measMode << "', use 'm', 'r' or 'b'\n";
-            break;
+#ifdef PATH_TO_API
+#ifndef CHDIRS_toAPI_off
+            if (auto chrc = changeDirToAPI() != 0) return chrc;
+#endif // !CHDIRS_toAPI_off
+#endif // PATH_TO_API
+
+            cout << "pxcExit...\n";
+            rc = pxcExit();
+            cout << "pxcExit: " << rc << " (0 is OK)\n";
+            return -123;
     }
 
     cout << "===============================================================================\n";
