@@ -5,7 +5,7 @@ This dir is root of the **Visual Studio 2026** solution.<br>
 * Can by used dirrectly by "Play" button
 * Can be compiled with Cmake [Binary core API: Building using cmake](https://wiki.advacam.cz/wiki/Binary_core_API#Building_using_cmake_on_Windows_with_Visual_Studio_installed)
 
-## First example: "example":
+## First example: "example"
 * Maintaining API package location
 * CMAKE example as comment in CPP file.
 * Error handling
@@ -37,10 +37,20 @@ This dir is root of the **Visual Studio 2026** solution.<br>
   * Dada-driven measurement (Timepix3 only) with callbacks for data processing
   * Exit Pixet core
 
+## example-calib
+* Some devices can measure energy deposited in each pixel and software can convert measured "time over threshold - ToT" to energy in keV.
+* Calibrated frame output can be enabled by enabling calibration before measurement.
+* Calibrated frames are accesible:
+  * In saved frame files
+  * Using "calibrated" variants of frame-get functions
+  * Using "calibrated" variants of single-frame-measure functions
+* Calibrated data-driven pixels are accesible:
+  * Applying calibration function to data-driven measured pixels
+
 # Examples of using binary/C processing API
 (required pixel processing library - not in standard package - on demand)
 
-## example-clustering-online / example-clustering-onffline
+## example-clustering-online / example-clustering-offline
 **Clustering:**
 * Convert stream of timestamped pixels or frames to stream of clusters
 

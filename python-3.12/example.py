@@ -5,7 +5,7 @@
 import sys, os
 
 outPath = "test-files" # Output path for output saving.
-apiPath = "../../../API-nightly" # Path to API package or Pixet installed
+apiPath = "..\\cpp-Windows-MSVS+Cmake\\x64\\Debug" # Path to API package or Pixet installed
 sys.path.append(apiPath)
 os.environ["PATH"] = apiPath + ";" + os.environ["PATH"]
 # Alternatively use path to installed Pixet Pro, it cause sharing automatic configurations.
@@ -26,6 +26,12 @@ print("Devices found:", len(devices))
 for n in range(len(devices)):
     print("  ", n, ":", devices[n].fullName())
 dev = devices[0]
+
+rc  = dev.loadFactoryConfig()
+print("dev.loadFactoryConfig rc:", rc, "(0 is OK)")
+if rc==-1027:
+    print("Create the 'factory' subdir and copy the factory config files there.")
+    print("Or set the FactoryDir= in the [settings] section of the pixet.ini file")
 
 rc = dev.setOperationMode(pixet.PX_TPX3_OPM_EVENT_ITOT)
 print("setOperationMode", rc, "(0 is OK)")

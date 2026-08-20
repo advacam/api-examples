@@ -14,7 +14,7 @@
 import sys, os, traceback, time
 
 outPath = "test-files" # Output path for saving.
-apiPath = "C:/Advacam/API-nightly" # Path to API package or Pixet installed
+apiPath = "..\\..\\cpp-Windows-MSVS+Cmake\\x64\\Debug" # Path to API package or Pixet installed
 sys.path.append(apiPath)
 os.environ["PATH"] = apiPath + ";" + os.environ["PATH"]
 # Alternatively use path to installed Pixet Pro, it cause sharing automatic configurations.

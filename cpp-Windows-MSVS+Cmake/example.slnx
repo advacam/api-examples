@@ -7,7 +7,7 @@
   <Project Path="example-callbacks-faster/example-callbacks-faster.vcxproj" Id="65797b2f-e6dd-428f-8ecb-dcc665aa1b8f" />
   <Project Path="example-callbacks/example-callbacks.vcxproj" Id="ab63a2ae-81cf-4861-9942-e5995307d9fe" />
   <Project Path="example-callbacks2/example-callbacks2.vcxproj" Id="8690b8f6-8c5f-406b-9ff7-b382d28935e2" />
-  <Project Path="example-clustering-offline/example-clustering-offline.vcxproj" />
+  <Project Path="example-clustering-offline/example-clustering-offline.vcxproj" Id="f47f0688-b21a-48d3-a318-5f07d4b96203" />
   <Project Path="example-clustering-online/example-clustering-online.vcxproj" Id="cfa12a12-6652-43bf-ab9d-458f72472324" />
   <Project Path="example-spectralimaging-offline/example-spectralimaging-offline.vcxproj" Id="4b387723-1dae-47ba-86c4-8d9784882801" />
   <Project Path="example-spectralimaging-online/example-spectralimaging-online.vcxproj" Id="aad63a32-89be-46ae-9fbb-9b5492bb535f" />
